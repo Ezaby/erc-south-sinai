@@ -37,7 +37,7 @@ gdjs.StartCode.GDCatText5Objects1= [];
 gdjs.StartCode.GDPresenterObjects1= [];
 
 
-gdjs.StartCode.userFunc0xa13940 = function GDJSInlineCode(runtimeScene) {
+gdjs.StartCode.userFunc0xa24820 = function GDJSInlineCode(runtimeScene) {
 "use strict";
 // ============================================================
 // CODE 7 — game engine for GDevelop (runs inside JsCode events)
@@ -113,9 +113,10 @@ if (!gdjs.__c7) {
     o.setX(cx - (nw * s) / 2); o.setY(cy - (nh * s) / 2);
     return s;
   };
-  // ---- sound effects (synthesized files in assets, played via gdjs sound tools) ----
-  // snd-click / snd-correct / snd-wrong / snd-success / snd-fail: one-shots.
-  // snd-heartbeat: seamless 60 BPM lub-dub loop on channel 7 during the Scenario scene.
+  // ---- sound effects (real library files in assets — see build/SOUND-SOURCES.md) ----
+  // snd-click / snd-correct / snd-wrong / snd-success / snd-fail / snd-flatline: one-shots.
+  // snd-heartbeat: real lub-dub loop on channel 7 while the patient is "alive" in the
+  // Scenario scene; a wrong answer (or a timeout) stops it and fires snd-flatline.
   // Everything is gated by C7.snd (the 🔊/🔇 MuteBtn toggle on Start + Scenario).
   C7.play = (rs, name, vol) => {
     if (!C7.snd) return;
@@ -240,10 +241,15 @@ if (!gdjs.__c7) {
       C7.show(rs, "Btn" + i, false); C7.show(rs, "BtnText" + i, false);
       if (i < S.nBtn) { C7.setAnim(rs, "Btn" + i, "dark"); C7.setText(rs, "BtnText" + i, Z.type === "o" ? S.steps[i].t : S.opts[i].t); }
     }
-    ["SlotsPanel", "SlotsText", "ResetBtn", "ResetText", "ConfirmBtn", "ConfirmText"].forEach((n) => C7.show(rs, n, false));
+    ["SlotsPanel", "SlotsText", "ResetBtn", "ResetText"].forEach((n) => C7.show(rs, n, false));
     C7.setText(rs, "ResetText", "↺ من الأول");
     C7.setText(rs, "SlotsText", "اضغط على الخطوات بالترتيب الصح…");
     C7.setText(rs, "ConfirmText", "تأكيد الترتيب");
+    // reading beats: the scenario text stays on screen until the player taps
+    // continue — the ConfirmBtn doubles as the continue button during the beats.
+    C7.setText(rs, "ConfirmText", "فهمت، يلا »");
+    C7.show(rs, "ConfirmBtn", true); C7.show(rs, "ConfirmText", true);
+    S.showStory = false;
     // feedback hidden
     ["FbPanel", "FbTitle", "FbResult", "FbProto", "FbGold", "NextBtn", "NextText"].forEach((n) => C7.show(rs, n, false));
     C7.setText(rs, "MuteText", C7.snd ? "🔊" : "🔇");
@@ -275,12 +281,22 @@ if (!gdjs.__c7) {
     const late = pick === null;
     let ok = false;
     if (!late) ok = Z.type === "o" ? !!pick : !!S.opts[pick].ok;
-    const frac = Math.max(0, (S.deadline - C7.now()) / (S.tot * 1000));
+    const frac = S.deadline ? Math.max(0, (S.deadline - C7.now()) / (S.tot * 1000)) : 1;
     let pts = 0, stars = 0;
     if (ok) { R.streak++; R.best = Math.max(R.best, R.streak); pts = 100 + Math.round(frac * 50) + Math.min(R.streak - 1, 3) * 10; stars = frac > 0.5 ? 3 : frac > 0.2 ? 2 : 1; }
     else R.streak = 0;
     R.xp += pts; R.stars += stars; R.res.push(ok);
-    C7.play(rs, ok ? "snd-correct" : "snd-wrong", ok ? 70 : 60);
+    S.lastOk = ok;
+    if (ok) {
+      // correct: the confirm sting plays and the heartbeat keeps its calm,
+      // regular rhythm underneath — the patient is stable.
+      C7.play(rs, "snd-correct", 70);
+    } else {
+      // wrong (or time out): the pulse stops — flatline moment.
+      C7.hbStop(rs);
+      C7.play(rs, "snd-wrong", 40);
+      C7.play(rs, "snd-flatline", 55);
+    }
     // button colors
     if (Z.type !== "o") S.opts.forEach((o, i) => { if (o.ok) C7.setAnim(rs, "Btn" + i, "green"); else if (i === pick) C7.setAnim(rs, "Btn" + i, "orange"); });
     else { C7.show(rs, "ConfirmBtn", false); C7.show(rs, "ConfirmText", false); }
@@ -297,6 +313,38 @@ if (!gdjs.__c7) {
     C7.setText(rs, "NextText", last ? "شوف النتيجة" : "المشهد التالي");
     C7.setAnim(rs, "NextBtn", ok ? "green" : "red");
     C7.leader(rs, ok ? "Proud" : "Serious", 86, 1258, 148, C7.now());
+  };
+  C7.enterDecision = (rs) => {
+    const S = rs.__s, Z = S.Z, t = C7.now();
+    S.phase = "decision"; S.t0 = t; S.lastTick = t;
+    // ordering scenarios: the clock starts at the first step picked,
+    // so the steps can be read first with no timer running.
+    S.deadline = Z.type === "o" ? 0 : t + S.tot * 1000;
+    const img = C7.obj(rs, "SceneImg");
+    if (img) img.setAnimationName(S.img + "_gray");
+    C7.show(rs, "FreezePanel", true); C7.show(rs, "FreezeText", true);
+    C7.show(rs, "ConfirmBtn", false); C7.show(rs, "ConfirmText", false);
+    C7.setText(rs, "ConfirmText", "تأكيد الترتيب");
+    // the scenario text stays readable during the decision: it remains in the
+    // caption band for non-vitals categories; for aid/fld the band carries the
+    // vitals and tapping the band toggles between vitals and the scenario text.
+    C7.setText(rs, "BeatText", Z.s);
+    if (S.hasVitals) {
+      C7.show(rs, "CaptionPanel", false); C7.show(rs, "WhoText", false); C7.show(rs, "BeatText", false);
+      ["VitalsPanel", "VitalTitle", "VitalName0", "VitalName1", "VitalName2", "VitalBar0", "VitalBar1", "VitalBar2", "VitalVal0", "VitalVal1", "VitalVal2"].forEach((n) => C7.show(rs, n, true));
+    }
+    C7.setText(rs, "QuestionText", "ده انت… " + (Z.q || ""));
+    C7.show(rs, "QuestionText", true);
+    const ord = Z.type === "o";
+    for (let i = 0; i < S.nBtn; i++) {
+      const b = C7.obj(rs, "Btn" + i), tx = C7.obj(rs, "BtnText" + i);
+      const y = ord ? 876 + i * 64 : 736 + i * 76, h = ord ? 56 : 64;
+      if (b) { b.setY(y); b.setHeight(h); }
+      if (tx) tx.setY(y + (ord ? 8 : 10));
+      C7.show(rs, "Btn" + i, true); C7.show(rs, "BtnText" + i, true);
+    }
+    if (ord) { C7.show(rs, "SlotsPanel", true); C7.show(rs, "SlotsText", true); C7.show(rs, "ResetBtn", true); C7.show(rs, "ResetText", true); }
+    C7.scenarioVitalsUI(rs);
   };
   C7.tickScenario = (rs) => {
     const R = C7.round; if (!R || !R.pool || !R.pool.length) return C7.goto(rs, "Start");
@@ -317,44 +365,26 @@ if (!gdjs.__c7) {
       img.setWidth(S.nw * sc); img.setHeight(S.nh * sc);
       img.setX(360 - (S.nw * sc) / 2 + S.kbDir * 14 * p); img.setY(300 - (S.nh * sc) / 2);
     }
-    if (S.phase === "beat1" && t - S.t0 >= 1150) {
-      S.phase = "beat2"; S.t0 = t;
-      C7.setText(rs, "BeatText", C7.ESC[Z.cat] || Z.s);
-    } else if (S.phase === "beat2" && t - S.t0 >= 1150) {
-      S.phase = "decision"; S.deadline = t + S.tot * 1000;
-      if (img) img.setAnimationName(S.img + "_gray");
-      C7.show(rs, "FreezePanel", true); C7.show(rs, "FreezeText", true);
-      // swap the caption band for vitals (aid/fld), then reveal the decision UI
-      C7.show(rs, "CaptionPanel", false); C7.show(rs, "WhoText", false); C7.show(rs, "BeatText", false);
-      if (S.hasVitals) ["VitalsPanel", "VitalTitle", "VitalName0", "VitalName1", "VitalName2", "VitalBar0", "VitalBar1", "VitalBar2", "VitalVal0", "VitalVal1", "VitalVal2"].forEach((n) => C7.show(rs, n, true));
-      C7.setText(rs, "QuestionText", "ده انت… " + (Z.q || ""));
-      C7.show(rs, "QuestionText", true);
-      const ord = Z.type === "o";
-      for (let i = 0; i < S.nBtn; i++) {
-        const b = C7.obj(rs, "Btn" + i), tx = C7.obj(rs, "BtnText" + i);
-        const y = ord ? 876 + i * 64 : 736 + i * 76, h = ord ? 56 : 64;
-        if (b) { b.setY(y); b.setHeight(h); }
-        if (tx) tx.setY(y + (ord ? 8 : 10));
-        C7.show(rs, "Btn" + i, true); C7.show(rs, "BtnText" + i, true);
-      }
-      if (ord) { C7.show(rs, "SlotsPanel", true); C7.show(rs, "SlotsText", true); C7.show(rs, "ResetBtn", true); C7.show(rs, "ResetText", true); }
-      C7.scenarioVitalsUI(rs);
-    } else if (S.phase === "decision") {
-      const frac = Math.max(0, (S.deadline - t) / (S.tot * 1000));
+    // the reading beats (beat1/beat2) never advance on their own — the player
+    // reads at his own pace and taps the continue button (see input below).
+    if (S.phase === "decision") {
+      // the decision clock runs only once started (see enterDecision / first step)
+      const frac = S.deadline ? Math.max(0, (S.deadline - t) / (S.tot * 1000)) : 1;
       C7.scenarioTimerUI(rs, frac);
+      if (!S.deadline) C7.setText(rs, "TimerText", "اقرأ الخطوات… المؤقّت يبدأ مع أول خطوة");
       const gl = C7.obj(rs, "Glow"); if (gl) gl.setOpacity(Math.round((1 - frac) * 150 + Math.sin(t / 160) * 18));
-      if (S.hasVitals) {
+      if (S.hasVitals && S.deadline) {
         const dt = Math.min(50, t - (S.lastTick || t)); S.lastTick = t;
         const rates = [14, 20, 30];
         S.vitals = S.vitals.map((v, i) => Math.max(8, v - (rates[i] * dt) / (S.tot * 1000)));
         C7.scenarioVitalsUI(rs);
       }
-      if (frac <= 0) return C7.judge(rs, null);
+      if (S.deadline && frac <= 0) return C7.judge(rs, null);
     }
     // input
     const edge = C7.clickEdge(rs);
     if (!edge) return;
-    if (C7.hit(rs, "MuteBtn")) { C7.snd = !C7.snd; C7.setText(rs, "MuteText", C7.snd ? "🔊" : "🔇"); if (C7.snd) { C7.play(rs, "snd-click", 55); C7.hbStart(rs); } else C7.hbStop(rs); return; }
+    if (C7.hit(rs, "MuteBtn")) { C7.snd = !C7.snd; C7.setText(rs, "MuteText", C7.snd ? "🔊" : "🔇"); if (C7.snd) { C7.play(rs, "snd-click", 55); if (!(S.phase === "feedback" && S.lastOk === false)) C7.hbStart(rs); } else C7.hbStop(rs); return; }
     if (C7.hit(rs, "ExitBtn")) { C7.play(rs, "snd-click", 55); C7.hbStop(rs); C7.round = null; return C7.goto(rs, "Start"); }
     if (S.phase === "feedback") {
       if (C7.hit(rs, "NextBtn")) {
@@ -365,7 +395,36 @@ if (!gdjs.__c7) {
       }
       return;
     }
+    if (S.phase === "beat1" || S.phase === "beat2") {
+      if (C7.hit(rs, "ConfirmBtn")) {
+        C7.play(rs, "snd-click", 55);
+        if (S.phase === "beat1") {
+          S.phase = "beat2"; S.t0 = t;
+          C7.setText(rs, "BeatText", C7.ESC[Z.cat] || Z.s);
+          C7.setText(rs, "ConfirmText", "قرّر دلوقتي »");
+        } else {
+          return C7.enterDecision(rs);
+        }
+      }
+      return;
+    }
     if (S.phase !== "decision" || S.judged) return;
+    // aid/fld: tap the caption band to swap between the vitals and the scenario text
+    if (S.hasVitals) {
+      if (!S.showStory && C7.hit(rs, "VitalsPanel")) {
+        S.showStory = true;
+        ["VitalsPanel", "VitalTitle", "VitalName0", "VitalName1", "VitalName2", "VitalBar0", "VitalBar1", "VitalBar2", "VitalVal0", "VitalVal1", "VitalVal2"].forEach((n) => C7.show(rs, n, false));
+        C7.show(rs, "CaptionPanel", true); C7.show(rs, "WhoText", true); C7.show(rs, "BeatText", true);
+        return;
+      }
+      if (S.showStory && C7.hit(rs, "CaptionPanel")) {
+        S.showStory = false;
+        C7.show(rs, "CaptionPanel", false); C7.show(rs, "WhoText", false); C7.show(rs, "BeatText", false);
+        ["VitalsPanel", "VitalTitle", "VitalName0", "VitalName1", "VitalName2", "VitalBar0", "VitalBar1", "VitalBar2", "VitalVal0", "VitalVal1", "VitalVal2"].forEach((n) => C7.show(rs, n, true));
+        C7.scenarioVitalsUI(rs);
+        return;
+      }
+    }
     if (Z.type === "o") {
       if (C7.hit(rs, "ResetBtn")) {
         C7.play(rs, "snd-click", 55);
@@ -378,6 +437,7 @@ if (!gdjs.__c7) {
       for (let i = 0; i < S.steps.length; i++) {
         if (C7.hit(rs, "Btn" + i)) {
           C7.play(rs, "snd-click", 55);
+          if (!S.deadline) { const nt = C7.now(); S.deadline = nt + S.tot * 1000; S.lastTick = nt; }
           S.chosen.push(S.steps[i]);
           C7.show(rs, "Btn" + i, false); C7.show(rs, "BtnText" + i, false);
           C7.setText(rs, "SlotsText", S.chosen.map((c, ix) => C7.ar(ix + 1) + ". " + c.t).join("\n"));
@@ -462,7 +522,7 @@ gdjs.StartCode.eventsList0 = function(runtimeScene) {
 {
 
 
-gdjs.StartCode.userFunc0xa13940(runtimeScene);
+gdjs.StartCode.userFunc0xa24820(runtimeScene);
 
 }
 
