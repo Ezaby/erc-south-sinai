@@ -17,7 +17,7 @@ gdjs.StartCode.GDCatBtn2Objects1= [];
 gdjs.StartCode.GDCatBtn3Objects1= [];
 gdjs.StartCode.GDCatBtn4Objects1= [];
 gdjs.StartCode.GDCatBtn5Objects1= [];
-gdjs.StartCode.GDTitleTextObjects1= [];
+gdjs.StartCode.GDLogoImgObjects1= [];
 gdjs.StartCode.GDSubTextObjects1= [];
 gdjs.StartCode.GDNameTextObjects1= [];
 gdjs.StartCode.GDSpeechTextObjects1= [];
@@ -37,7 +37,7 @@ gdjs.StartCode.GDCatText5Objects1= [];
 gdjs.StartCode.GDPresenterObjects1= [];
 
 
-gdjs.StartCode.userFunc0xae1ea8 = function GDJSInlineCode(runtimeScene) {
+gdjs.StartCode.userFunc0xa13940 = function GDJSInlineCode(runtimeScene) {
 "use strict";
 // ============================================================
 // CODE 7 — game engine for GDevelop (runs inside JsCode events)
@@ -113,23 +113,19 @@ if (!gdjs.__c7) {
     o.setX(cx - (nw * s) / 2); o.setY(cy - (nh * s) / 2);
     return s;
   };
-  // ---- heartbeat (WebAudio, no files) ----
-  C7._ac = null; C7._hbNext = 0;
-  C7._beat = () => {
+  // ---- sound effects (synthesized files in assets, played via gdjs sound tools) ----
+  // snd-click / snd-correct / snd-wrong / snd-success / snd-fail: one-shots.
+  // snd-heartbeat: seamless 60 BPM lub-dub loop on channel 7 during the Scenario scene.
+  // Everything is gated by C7.snd (the 🔊/🔇 MuteBtn toggle on Start + Scenario).
+  C7.play = (rs, name, vol) => {
     if (!C7.snd) return;
-    try {
-      if (!C7._ac) C7._ac = new (window.AudioContext || window.webkitAudioContext)();
-      const c = C7._ac; if (c.state === "suspended") c.resume();
-      const t = c.currentTime;
-      const thump = (tt, f, v, d) => { const o = c.createOscillator(), g = c.createGain(); o.type = "sine"; o.frequency.setValueAtTime(f, tt); g.gain.setValueAtTime(0.0001, tt); g.gain.exponentialRampToValueAtTime(v, tt + 0.018); g.gain.exponentialRampToValueAtTime(0.0001, tt + d); o.connect(g); g.connect(c.destination); o.start(tt); o.stop(tt + d + 0.05); };
-      thump(t, 57, 0.55, 0.16); thump(t + 0.19, 48, 0.32, 0.13);
-    } catch (e) {}
+    try { gdjs.evtTools.sound.playSound(rs, name, false, vol == null ? 70 : vol, 1); } catch (e) {}
   };
-  C7.heartbeat = (frac) => {
+  C7.hbStart = (rs) => {
     if (!C7.snd) return;
-    const n = C7.now();
-    if (n >= C7._hbNext) { C7._beat(); C7._hbNext = n + (950 - 330 * (1 - frac)); }
+    try { gdjs.evtTools.sound.playSoundOnChannel(rs, "snd-heartbeat", 7, true, 34, 1); } catch (e) {}
   };
+  C7.hbStop = (rs) => { try { gdjs.evtTools.sound.stopSoundOnChannel(rs, 7); } catch (e) {} };
   C7.buildPool = (cat) => {
     const all = (C7.data && C7.data.scenarios) || [];
     if (cat === "all") return C7.shuffle(all).slice(0, 6);
@@ -140,6 +136,7 @@ if (!gdjs.__c7) {
 
   // ================= START SCENE =================
   C7.initStart = (rs) => {
+    C7.hbStop(rs); // safety: the heartbeat loop belongs to the Scenario scene only
     const S = (rs.__s = { tw: 0, twStart: C7.now(), done: false });
     C7.setText(rs, "SubText", "محاكاة مواقف المتطوع — الهلال الأحمر المصري · فرع جنوب سيناء");
     C7.setText(rs, "NameText", "القائدة حنين");
@@ -174,12 +171,13 @@ if (!gdjs.__c7) {
     C7.leader(rs, "Idle", 360, 560, 400, t);
     const edge = C7.clickEdge(rs);
     if (!edge) return;
-    if (C7.hit(rs, "SpeechPanel")) { S.done = true; C7.setText(rs, "SpeechText", speech); }
-    if (C7.hit(rs, "FsBtn")) return C7.fullscreen();
-    if (C7.hit(rs, "MuteBtn")) { C7.snd = !C7.snd; C7.setText(rs, "MuteText", C7.snd ? "🔊" : "🔇"); return; }
-    for (let i = 0; i < 6; i++) if (C7.hit(rs, "CatBtn" + i)) { C7.sel.cat = C7.CATKEYS[i]; return C7.startRefreshSel(rs); }
-    for (let i = 0; i < 3; i++) if (C7.hit(rs, "DiffBtn" + i)) { C7.sel.diff = i; return C7.startRefreshSel(rs); }
+    if (C7.hit(rs, "SpeechPanel")) { C7.play(rs, "snd-click", 45); S.done = true; C7.setText(rs, "SpeechText", speech); }
+    if (C7.hit(rs, "FsBtn")) { C7.play(rs, "snd-click", 55); return C7.fullscreen(); }
+    if (C7.hit(rs, "MuteBtn")) { C7.snd = !C7.snd; C7.setText(rs, "MuteText", C7.snd ? "🔊" : "🔇"); if (C7.snd) C7.play(rs, "snd-click", 55); return; }
+    for (let i = 0; i < 6; i++) if (C7.hit(rs, "CatBtn" + i)) { C7.play(rs, "snd-click", 55); C7.sel.cat = C7.CATKEYS[i]; return C7.startRefreshSel(rs); }
+    for (let i = 0; i < 3; i++) if (C7.hit(rs, "DiffBtn" + i)) { C7.play(rs, "snd-click", 55); C7.sel.diff = i; return C7.startRefreshSel(rs); }
     if (C7.hit(rs, "StartBtn")) {
+      C7.play(rs, "snd-click", 60);
       C7.round = { cat: C7.sel.cat, diff: C7.DIFFS[C7.sel.diff], pool: C7.buildPool(C7.sel.cat), i: 0, xp: 0, streak: 0, best: 0, stars: 0, res: [] };
       if (C7.round.pool.length) C7.goto(rs, "Scenario");
     }
@@ -253,6 +251,8 @@ if (!gdjs.__c7) {
     // timer bar full
     C7.scenarioTimerUI(rs, 1);
     C7.leader(rs, "Focus", 86, 1258, 148, t);
+    // heartbeat loop runs for the whole scenario screen (beats + decision + feedback)
+    C7.hbStart(rs);
   };
   C7.scenarioTimerUI = (rs, frac) => {
     const bar = C7.obj(rs, "TimerBar"); if (!bar) return;
@@ -280,6 +280,7 @@ if (!gdjs.__c7) {
     if (ok) { R.streak++; R.best = Math.max(R.best, R.streak); pts = 100 + Math.round(frac * 50) + Math.min(R.streak - 1, 3) * 10; stars = frac > 0.5 ? 3 : frac > 0.2 ? 2 : 1; }
     else R.streak = 0;
     R.xp += pts; R.stars += stars; R.res.push(ok);
+    C7.play(rs, ok ? "snd-correct" : "snd-wrong", ok ? 70 : 60);
     // button colors
     if (Z.type !== "o") S.opts.forEach((o, i) => { if (o.ok) C7.setAnim(rs, "Btn" + i, "green"); else if (i === pick) C7.setAnim(rs, "Btn" + i, "orange"); });
     else { C7.show(rs, "ConfirmBtn", false); C7.show(rs, "ConfirmText", false); }
@@ -341,7 +342,6 @@ if (!gdjs.__c7) {
     } else if (S.phase === "decision") {
       const frac = Math.max(0, (S.deadline - t) / (S.tot * 1000));
       C7.scenarioTimerUI(rs, frac);
-      C7.heartbeat(frac);
       const gl = C7.obj(rs, "Glow"); if (gl) gl.setOpacity(Math.round((1 - frac) * 150 + Math.sin(t / 160) * 18));
       if (S.hasVitals) {
         const dt = Math.min(50, t - (S.lastTick || t)); S.lastTick = t;
@@ -354,12 +354,13 @@ if (!gdjs.__c7) {
     // input
     const edge = C7.clickEdge(rs);
     if (!edge) return;
-    if (C7.hit(rs, "MuteBtn")) { C7.snd = !C7.snd; C7.setText(rs, "MuteText", C7.snd ? "🔊" : "🔇"); return; }
-    if (C7.hit(rs, "ExitBtn")) { C7.round = null; return C7.goto(rs, "Start"); }
+    if (C7.hit(rs, "MuteBtn")) { C7.snd = !C7.snd; C7.setText(rs, "MuteText", C7.snd ? "🔊" : "🔇"); if (C7.snd) { C7.play(rs, "snd-click", 55); C7.hbStart(rs); } else C7.hbStop(rs); return; }
+    if (C7.hit(rs, "ExitBtn")) { C7.play(rs, "snd-click", 55); C7.hbStop(rs); C7.round = null; return C7.goto(rs, "Start"); }
     if (S.phase === "feedback") {
       if (C7.hit(rs, "NextBtn")) {
+        C7.play(rs, "snd-click", 55);
         R.i++;
-        if (R.i >= R.pool.length) return C7.goto(rs, "Results");
+        if (R.i >= R.pool.length) { C7.hbStop(rs); return C7.goto(rs, "Results"); }
         return C7.startScenario(rs);
       }
       return;
@@ -367,6 +368,7 @@ if (!gdjs.__c7) {
     if (S.phase !== "decision" || S.judged) return;
     if (Z.type === "o") {
       if (C7.hit(rs, "ResetBtn")) {
+        C7.play(rs, "snd-click", 55);
         S.chosen = [];
         for (let i = 0; i < S.steps.length; i++) { C7.show(rs, "Btn" + i, true); C7.show(rs, "BtnText" + i, true); C7.setAnim(rs, "Btn" + i, "dark"); }
         C7.setText(rs, "SlotsText", "اضغط على الخطوات بالترتيب الصح…");
@@ -375,6 +377,7 @@ if (!gdjs.__c7) {
       }
       for (let i = 0; i < S.steps.length; i++) {
         if (C7.hit(rs, "Btn" + i)) {
+          C7.play(rs, "snd-click", 55);
           S.chosen.push(S.steps[i]);
           C7.show(rs, "Btn" + i, false); C7.show(rs, "BtnText" + i, false);
           C7.setText(rs, "SlotsText", S.chosen.map((c, ix) => C7.ar(ix + 1) + ". " + c.t).join("\n"));
@@ -393,6 +396,7 @@ if (!gdjs.__c7) {
 
   // ================= RESULTS SCENE =================
   C7.initResults = (rs) => {
+    C7.hbStop(rs); // the heartbeat stops at the results, as designed
     const R = C7.round || { cat: "all", pool: [], xp: 0, stars: 0, res: [], best: 0 };
     const n = Math.max(1, R.pool.length);
     const ratio = R.stars / (3 * n);
@@ -411,6 +415,8 @@ if (!gdjs.__c7) {
     if (bg) { C7.cover(bg, 1100, 733, 720, 1280, 360, 640); bg.setOpacity(110); }
     const veil = C7.obj(rs, "Veil"); if (veil) veil.setOpacity(165);
     rs.__r = r;
+    // mission-end sting: success melody at 2+ stars, descending tone below that
+    C7.play(rs, r >= 2 ? "snd-success" : "snd-fail", 75);
   };
   C7.tickResults = (rs) => {
     const S = rs.__s, t = C7.now(); if (!S) return;
@@ -431,11 +437,12 @@ if (!gdjs.__c7) {
     const edge = C7.clickEdge(rs);
     if (!edge) return;
     if (C7.hit(rs, "AgainBtn")) {
+      C7.play(rs, "snd-click", 55);
       const cat = C7.round ? C7.round.cat : "all";
       C7.round = { cat, diff: C7.round ? C7.round.diff : C7.DIFFS[C7.sel.diff], pool: C7.buildPool(cat), i: 0, xp: 0, streak: 0, best: 0, stars: 0, res: [] };
       if (C7.round.pool.length) C7.goto(rs, "Scenario");
     }
-    if (C7.hit(rs, "HomeBtn")) return C7.goto(rs, "Start");
+    if (C7.hit(rs, "HomeBtn")) { C7.play(rs, "snd-click", 55); return C7.goto(rs, "Start"); }
   };
 }
 
@@ -455,7 +462,7 @@ gdjs.StartCode.eventsList0 = function(runtimeScene) {
 {
 
 
-gdjs.StartCode.userFunc0xae1ea8(runtimeScene);
+gdjs.StartCode.userFunc0xa13940(runtimeScene);
 
 }
 
@@ -481,7 +488,7 @@ gdjs.StartCode.GDCatBtn2Objects1.length = 0;
 gdjs.StartCode.GDCatBtn3Objects1.length = 0;
 gdjs.StartCode.GDCatBtn4Objects1.length = 0;
 gdjs.StartCode.GDCatBtn5Objects1.length = 0;
-gdjs.StartCode.GDTitleTextObjects1.length = 0;
+gdjs.StartCode.GDLogoImgObjects1.length = 0;
 gdjs.StartCode.GDSubTextObjects1.length = 0;
 gdjs.StartCode.GDNameTextObjects1.length = 0;
 gdjs.StartCode.GDSpeechTextObjects1.length = 0;
@@ -517,7 +524,7 @@ gdjs.StartCode.GDCatBtn2Objects1.length = 0;
 gdjs.StartCode.GDCatBtn3Objects1.length = 0;
 gdjs.StartCode.GDCatBtn4Objects1.length = 0;
 gdjs.StartCode.GDCatBtn5Objects1.length = 0;
-gdjs.StartCode.GDTitleTextObjects1.length = 0;
+gdjs.StartCode.GDLogoImgObjects1.length = 0;
 gdjs.StartCode.GDSubTextObjects1.length = 0;
 gdjs.StartCode.GDNameTextObjects1.length = 0;
 gdjs.StartCode.GDSpeechTextObjects1.length = 0;
