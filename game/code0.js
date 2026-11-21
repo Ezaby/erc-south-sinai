@@ -37,7 +37,7 @@ gdjs.StartCode.GDCatText5Objects1= [];
 gdjs.StartCode.GDPresenterObjects1= [];
 
 
-gdjs.StartCode.userFunc0xae3c68 = function GDJSInlineCode(runtimeScene) {
+gdjs.StartCode.userFunc0xa1ab10 = function GDJSInlineCode(runtimeScene) {
 "use strict";
 // ============================================================
 // CODE 7 — game engine for GDevelop (runs inside JsCode events)
@@ -114,17 +114,35 @@ if (!gdjs.__c7) {
     return s;
   };
   // ---- sound effects (real library files in assets — see build/SOUND-SOURCES.md) ----
-  // snd-click / snd-correct / snd-wrong / snd-success / snd-fail / snd-flatline: one-shots.
-  // snd-heartbeat: real lub-dub loop on channel 7 while the patient is "alive" in the
-  // Scenario scene; a wrong answer (or a timeout) stops it and fires snd-flatline.
+  // snd-click / snd-correct / snd-wrong / snd-success / snd-fail: one-shots.
+  // The heartbeat system (Mohamed's design, 2026-11-21): every pulse sound is cut
+  // from ONE heart-monitor recording Mohamed supplied himself — steady beats that
+  // slow down and finally stop. Three loop stages ride on channel 7 and follow the
+  // decision clock (same 50% / 25% breaks as the timer bar colours):
+  //   stage 0 "snd-heartbeat"       — steady lub-dub + monitor beep loop
+  //   stage 1 "snd-heartbeat-slow"  — the recording's own slowing beats loop
+  //   stage 2 "snd-heartbeat-dying" — the last strong beat + faint dying beeps loop
+  // A wrong answer (or a timeout) stops the pulse and fires "snd-flatline" (the
+  // recording's own flatline tone); a correct answer returns the pulse to steady.
   // Everything is gated by C7.snd (the 🔊/🔇 MuteBtn toggle on Start + Scenario).
   C7.play = (rs, name, vol) => {
     if (!C7.snd) return;
     try { gdjs.evtTools.sound.playSound(rs, name, false, vol == null ? 70 : vol, 1); } catch (e) {}
   };
-  C7.hbStart = (rs) => {
+  C7.HB_FILES = ["snd-heartbeat", "snd-heartbeat-slow", "snd-heartbeat-dying"];
+  C7.hbPlay = (rs) => {
     if (!C7.snd) return;
-    try { gdjs.evtTools.sound.playSoundOnChannel(rs, "snd-heartbeat", 7, true, 34, 1); } catch (e) {}
+    const st = rs.__s && rs.__s.hbStage ? rs.__s.hbStage : 0;
+    try {
+      gdjs.evtTools.sound.stopSoundOnChannel(rs, 7);
+      gdjs.evtTools.sound.playSoundOnChannel(rs, C7.HB_FILES[st], 7, true, 100, 1);
+    } catch (e) {}
+  };
+  C7.hbSetStage = (rs, stage) => {
+    const S = rs.__s; if (!S || S.hbStage === stage) return;
+    S.hbStage = stage;
+    if (S.phase === "feedback" && S.lastOk === false) return; // pulse is dead — flatline already fired
+    C7.hbPlay(rs);
   };
   C7.hbStop = (rs) => { try { gdjs.evtTools.sound.stopSoundOnChannel(rs, 7); } catch (e) {} };
   C7.buildPool = (cat) => {
@@ -192,7 +210,7 @@ if (!gdjs.__c7) {
   };
   C7.startScenario = (rs) => {
     const R = C7.round, Z = R.pool[R.i], t = C7.now();
-    const S = (rs.__s = { Z, phase: "beat1", t0: t, judged: false, shakeUntil: 0, kbDir: R.i % 2 ? -1 : 1 });
+    const S = (rs.__s = { Z, phase: "beat1", t0: t, judged: false, shakeUntil: 0, kbDir: R.i % 2 ? -1 : 1, hbStage: 0 });
     R.Z = Z;
     S.tot = (Z.type === "o" ? 35 : 20) * R.diff.m;
     // scene image (color + gray twin)
@@ -258,7 +276,7 @@ if (!gdjs.__c7) {
     C7.scenarioTimerUI(rs, 1);
     C7.leader(rs, "Focus", 86, 1258, 148, t);
     // heartbeat loop runs for the whole scenario screen (beats + decision + feedback)
-    C7.hbStart(rs);
+    C7.hbPlay(rs);
   };
   C7.scenarioTimerUI = (rs, frac) => {
     const bar = C7.obj(rs, "TimerBar"); if (!bar) return;
@@ -288,14 +306,15 @@ if (!gdjs.__c7) {
     R.xp += pts; R.stars += stars; R.res.push(ok);
     S.lastOk = ok;
     if (ok) {
-      // correct: the confirm sting plays and the heartbeat keeps its calm,
-      // regular rhythm underneath — the patient is stable.
+      // correct: the confirm sting plays and the pulse returns to its steady,
+      // regular rhythm underneath — the patient is stable again.
+      C7.hbSetStage(rs, 0);
       C7.play(rs, "snd-correct", 70);
     } else {
       // wrong (or time out): the pulse stops — flatline moment.
       C7.hbStop(rs);
       C7.play(rs, "snd-wrong", 40);
-      C7.play(rs, "snd-flatline", 55);
+      C7.play(rs, "snd-flatline", 100);
     }
     // button colors
     if (Z.type !== "o") S.opts.forEach((o, i) => { if (o.ok) C7.setAnim(rs, "Btn" + i, "green"); else if (i === pick) C7.setAnim(rs, "Btn" + i, "orange"); });
@@ -371,6 +390,9 @@ if (!gdjs.__c7) {
       // the decision clock runs only once started (see enterDecision / first step)
       const frac = S.deadline ? Math.max(0, (S.deadline - t) / (S.tot * 1000)) : 1;
       C7.scenarioTimerUI(rs, frac);
+      // the pulse follows the clock: steady above half time, slowing under it,
+      // dying in the last quarter (same breaks as the timer bar colours).
+      C7.hbSetStage(rs, frac > 0.5 ? 0 : frac > 0.25 ? 1 : 2);
       if (!S.deadline) C7.setText(rs, "TimerText", "اقرأ الخطوات… المؤقّت يبدأ مع أول خطوة");
       const gl = C7.obj(rs, "Glow"); if (gl) gl.setOpacity(Math.round((1 - frac) * 150 + Math.sin(t / 160) * 18));
       if (S.hasVitals && S.deadline) {
@@ -384,7 +406,7 @@ if (!gdjs.__c7) {
     // input
     const edge = C7.clickEdge(rs);
     if (!edge) return;
-    if (C7.hit(rs, "MuteBtn")) { C7.snd = !C7.snd; C7.setText(rs, "MuteText", C7.snd ? "🔊" : "🔇"); if (C7.snd) { C7.play(rs, "snd-click", 55); if (!(S.phase === "feedback" && S.lastOk === false)) C7.hbStart(rs); } else C7.hbStop(rs); return; }
+    if (C7.hit(rs, "MuteBtn")) { C7.snd = !C7.snd; C7.setText(rs, "MuteText", C7.snd ? "🔊" : "🔇"); if (C7.snd) { C7.play(rs, "snd-click", 55); if (!(S.phase === "feedback" && S.lastOk === false)) C7.hbPlay(rs); } else C7.hbStop(rs); return; }
     if (C7.hit(rs, "ExitBtn")) { C7.play(rs, "snd-click", 55); C7.hbStop(rs); C7.round = null; return C7.goto(rs, "Start"); }
     if (S.phase === "feedback") {
       if (C7.hit(rs, "NextBtn")) {
@@ -522,7 +544,7 @@ gdjs.StartCode.eventsList0 = function(runtimeScene) {
 {
 
 
-gdjs.StartCode.userFunc0xae3c68(runtimeScene);
+gdjs.StartCode.userFunc0xa1ab10(runtimeScene);
 
 }
 
