@@ -442,7 +442,12 @@ function renderDecision() {
   const body = el('playBody'); body.innerHTML = '';
   const diff = DIFFS[SETTINGS.difficulty];
   // scene reminder (short)
-  if (ep.scene && EP.idx === 0) { const sc = document.createElement('div'); sc.className = 'scene-txt'; sc.textContent = ep.scene; body.appendChild(sc); }
+  if (EP.idx === 0) {
+    const fig = document.createElement('div'); fig.className = 'scene-fig';
+    fig.innerHTML = `<img src="assets/scenes/${ep.id}.webp" alt="">`;
+    body.appendChild(fig);
+    if (ep.scene) { const sc = document.createElement('div'); sc.className = 'scene-txt'; sc.textContent = ep.scene; body.appendChild(sc); }
+  }
   const q = document.createElement('div'); q.className = 'dec-prompt';
   q.textContent = `قرار ${AR(EP.idx + 1)} من ${AR(ep.decisions.length)}: ${d.prompt}`;
   body.appendChild(q);
