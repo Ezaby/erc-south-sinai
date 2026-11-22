@@ -76,23 +76,25 @@ function lineAudio(lineId) {
   stopLineAudio(); // Haneen speaks one line at a time — never two voices together
   const a = new Audio('audio/' + lineId + '.mp3');
   CURRENT_LINE_AUDIO = a;
-  a.play().catch(() => {}); // missing file = silent, text carries on
+  const pr = a.play(); if (pr && pr.catch) pr.catch(() => { try { a.dispatchEvent(new Event('playfailed')); } catch (e) {} });
   return a;
 }
 
 /* =============== typewriter =============== */
 function typewrite(node, text, lineId) {
-  if (node._tw) clearInterval(node._tw);
+  if (node._tw) { clearTimeout(node._tw); node._tw = null; }
   node.textContent = '';
   const __aud = lineAudio(lineId);
   let i = 0;
   const full = text || '';
-  node._tw = setInterval(() => {
-    i += 2;
-    node.textContent = full.slice(0, i);
-    if (i >= full.length) { clearInterval(node._tw); node._tw = null; }
-  }, 24);
-  node.onclick = () => { if (node._tw) { clearInterval(node._tw); node._tw = null; } node.textContent = full; };
+  let per = 26; // ms per char when there is no voice to follow
+  if (__aud) {
+    const setPace = () => { if (isFinite(__aud.duration) && __aud.duration > 0) per = Math.max(16, (__aud.duration * 880) / Math.max(full.length, 1)); };
+    if (isFinite(__aud.duration) && __aud.duration > 0) setPace(); else __aud.addEventListener('loadedmetadata', setPace, { once: true });
+  }
+  const step = () => { if (i < full.length) { i++; node.textContent = full.slice(0, i); node._tw = setTimeout(step, per); } else node._tw = null; };
+  step();
+  node.onclick = () => { if (node._tw) { clearTimeout(node._tw); node._tw = null; } node.textContent = full; };
   return __aud;
 }
 function bubbleHTML(img, who) {
@@ -400,6 +402,7 @@ function startEpisode(season, ep) {
         setTimeout(() => { minDone = true; tryAdv(); }, Math.min(wait, 2600));
         let fbTimer = setTimeout(adv, wait + 9000); // safety net only — the voice decides when we move on
         aud.onloadedmetadata = () => { clearTimeout(fbTimer); fbTimer = setTimeout(adv, (aud.duration || 0) * 1000 + 2500); };
+        aud.addEventListener('playfailed', () => { clearTimeout(fbTimer); fbTimer = setTimeout(adv, wait); });
       } else {
         setTimeout(playNext, wait);
       }
@@ -561,6 +564,7 @@ function chooseOption(chosen, btn, optsWrap) {
     next.disabled = true;
     const unlock = () => { next.disabled = false; };
     fbAud.onended = unlock;
+    fbAud.addEventListener('playfailed', () => setTimeout(unlock, Math.max(2400, (LINES[line] || '').length * 46)));
     setTimeout(unlock, (isFinite(fbAud.duration) && fbAud.duration ? fbAud.duration * 1000 : 9000) + 2500);
   }
 }
@@ -904,9 +908,9 @@ async function boot() {
   wireAuth(); wireHome();
   try {
     const [s, l, b] = await Promise.all([
-      fetch('data/seasons.json').then(r => r.json()),
-      fetch('data/lines.json').then(r => r.json()),
-      fetch('data/bank.json').then(r => r.json())
+      fetch('data/seasons.json', { cache: 'no-store' }).then(r => r.json()),
+      fetch('data/lines.json', { cache: 'no-store' }).then(r => r.json()),
+      fetch('data/bank.json', { cache: 'no-store' }).then(r => r.json())
     ]);
     DATA.seasons = s.seasons; DATA.lines = l; DATA.bank = b;
   } catch (e) {
@@ -919,9 +923,16 @@ async function boot() {
   const node = el('introTxt');
   const stepIntro = () => {
     if (i >= seq.length) return;
-    typewrite(node, seq[i].text, seq[i].id);
-    i++;
-    setTimeout(stepIntro, Math.max(2600, seq[i - 1].text.length * 46));
+    const line = seq[i]; i++;
+    const aud = typewrite(node, line.text, line.id);
+    const wait = Math.max(2600, line.text.length * 46);
+    if (!aud) { setTimeout(stepIntro, wait); return; }
+    let done = false;
+    const adv = () => { if (!done) { done = true; stepIntro(); } };
+    aud.onended = adv;
+    let fb = setTimeout(adv, wait + 9000);
+    aud.onloadedmetadata = () => { clearTimeout(fb); fb = setTimeout(adv, (aud.duration || 0) * 1000 + 2500); };
+    aud.addEventListener('playfailed', () => { clearTimeout(fb); fb = setTimeout(adv, wait); });
   };
   stepIntro();
   // existing session?
