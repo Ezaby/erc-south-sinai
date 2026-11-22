@@ -11,9 +11,9 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{
-  --red:#d80f26; --red-dark:#9e0a1f; --ink:#1c1e22; --muted:#6b7280;
-  --bg:#f8f2ef; --card:#ffffff; --line:#e9ddd6; --gold:#d9a441;
-  --ok:#1e9e62; --bad:#d43a2f; --radius:16px;
+  --red:#e8112d; --red-dark:#a50d21; --red-hi:#ff2b3f; --ink:#f4f4f5; --muted:#a3a3ad;
+  --bg:#0b0b0d; --card:#17171b; --line:#2b2b31; --gold:#d9a441;
+  --ok:#2fbf71; --bad:#ff5040; --radius:16px;
 }
 *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
 html,body{margin:0; padding:0}
@@ -28,23 +28,23 @@ input,select{font-family:inherit}
 @keyframes fade{from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:none}}
 
 /* ---------- start / auth ---------- */
-.hero{text-align:center; background:linear-gradient(165deg,#ec1233 0%,var(--red) 52%,var(--red-dark) 100%); margin:-18px -16px 0; padding:28px 16px 24px; border-radius:0 0 28px 28px; box-shadow:0 12px 26px rgba(216,15,38,.28)}
-.hero img.logo{width:132px; height:132px; object-fit:contain; background:#fff; border-radius:50%; padding:9px; box-shadow:0 8px 20px rgba(0,0,0,.22)}
-.hero .slogan{font-size:21px; font-weight:800; color:#fff; margin:12px 0 3px; line-height:1.7; text-shadow:0 2px 8px rgba(0,0,0,.18)}
-.hero .sub{color:rgba(255,255,255,.88); font-size:13.5px; margin:0}
+.hero{text-align:center; background:radial-gradient(120% 95% at 50% 0%, #33030c 0%, #0b0b0d 64%); margin:-18px -16px 0; padding:28px 16px 24px; border-radius:0 0 28px 28px; border-bottom:2px solid var(--red); box-shadow:0 14px 32px rgba(232,17,45,.16)}
+.hero img.logo{width:132px; height:132px; object-fit:contain; background:#fff; border-radius:50%; padding:9px; box-shadow:0 0 0 3px var(--red), 0 10px 26px rgba(0,0,0,.55)}
+.hero .slogan{font-size:21px; font-weight:800; color:var(--red-hi); margin:12px 0 3px; line-height:1.7; text-shadow:0 2px 14px rgba(232,17,45,.35)}
+.hero .sub{color:#c9c9cf; font-size:13.5px; margin:0}
 .haneen-row{display:flex; gap:12px; align-items:flex-end; margin:18px 0 6px}
 .haneen-row img{width:96px; height:126px; object-fit:cover; object-position:top center; border-radius:14px; border:2px solid var(--line); box-shadow:0 4px 14px rgba(0,0,0,.10); background:#fff; flex:none}
 .haneen-fig{display:flex; flex-direction:column; flex:none; width:96px}
 .haneen-fig img{width:96px; height:126px; border-bottom-left-radius:0; border-bottom-right-radius:0; border-bottom:none}
 .haneen-fig span{background:var(--red); color:#fff; font-size:12.5px; font-weight:800; text-align:center; padding:5px 2px; border-radius:0 0 14px 14px}
-.bubble{background:var(--card); border:1px solid var(--line); border-radius:18px; border-bottom-right-radius:4px; padding:12px 14px; font-size:16px; line-height:1.9; flex:1; min-height:96px; box-shadow:0 2px 10px rgba(0,0,0,.04)}
-.bubble .who{font-weight:800; color:var(--red); font-size:13px; margin-bottom:2px}
+.bubble{background:var(--card); border:1px solid var(--line); border-radius:18px; border-bottom-right-radius:4px; padding:12px 14px; font-size:16px; line-height:1.9; flex:1; min-height:96px; box-shadow:0 2px 10px rgba(0,0,0,.35)}
+.bubble .who{font-weight:800; color:var(--red-hi); font-size:13px; margin-bottom:2px}
 .bubble .txt{min-height:56px}
 .bubble .next-hint{color:var(--muted); font-size:12px; margin-top:6px}
 .btn{display:block; width:100%; border:none; border-radius:14px; padding:15px 16px; font-size:17px; font-weight:800; margin-top:10px; transition:transform .06s ease, opacity .2s}
 .btn:active{transform:scale(.985)}
 .btn-red{background:var(--red); color:#fff}
-.btn-dark{background:var(--ink); color:#fff}
+.btn-dark{background:#26262c; color:#fff; border:1px solid var(--line)}
 .btn-ghost{background:var(--card); color:var(--ink); border:1.5px solid var(--line)}
 .btn-gold{background:var(--gold); color:#231a04}
 .btn[disabled]{opacity:.45; pointer-events:none}
@@ -53,18 +53,18 @@ input,select{font-family:inherit}
 .card h3{margin:0 0 8px; font-size:17px}
 .field{margin-top:10px}
 .field label{display:block; font-size:13px; font-weight:700; color:var(--muted); margin-bottom:5px}
-.field input{width:100%; border:1.5px solid var(--line); border-radius:12px; padding:13px 12px; font-size:16px; background:#fff; color:var(--ink)}
+.field input{width:100%; border:1.5px solid var(--line); border-radius:12px; padding:13px 12px; font-size:16px; background:#101013; color:var(--ink)}
 .field input:focus{outline:none; border-color:var(--red)}
 .msg{font-size:14px; line-height:1.8; margin-top:10px; min-height:20px}
 .msg.err{color:var(--bad)} .msg.ok{color:var(--ok)}
 .tabs{display:flex; gap:8px; margin-top:14px}
 .tabs button{flex:1; border:1.5px solid var(--line); background:var(--card); border-radius:12px; padding:11px 6px; font-size:15px; font-weight:700}
 .tabs button.on{background:var(--red); color:#fff; border-color:var(--red)}
-.consent{font-size:12.5px; color:var(--muted); line-height:1.9; background:#fbf9f6; border:1px dashed var(--line); border-radius:12px; padding:10px 12px; margin-top:12px}
-.linkish{background:none; border:none; color:var(--red); font-weight:700; font-size:14px; padding:6px}
+.consent{font-size:12.5px; color:var(--muted); line-height:1.9; background:#121215; border:1px dashed var(--line); border-radius:12px; padding:10px 12px; margin-top:12px}
+.linkish{background:none; border:none; color:var(--red-hi); font-weight:700; font-size:14px; padding:6px}
 
 /* ---------- home / journey ---------- */
-.topbar{display:flex; align-items:center; justify-content:space-between; gap:10px; background:linear-gradient(120deg,var(--red),var(--red-dark)); color:#fff; margin:-18px -16px 0; padding:20px 16px 14px; border-radius:0 0 20px 20px; box-shadow:0 8px 20px rgba(216,15,38,.22)}
+.topbar{display:flex; align-items:center; justify-content:space-between; gap:10px; background:#0b0b0d; color:#fff; margin:-18px -16px 0; padding:20px 16px 14px; border-radius:0 0 20px 20px; border-bottom:2px solid var(--red); box-shadow:0 10px 24px rgba(0,0,0,.5)}
 .topbar .brand{display:flex; align-items:center; gap:9px; font-weight:800; font-size:19px}
 .topbar .brand img{width:44px; height:44px; object-fit:contain; background:#fff; border-radius:50%; padding:3px}
 .icon-btn{background:var(--card); border:1.5px solid var(--line); border-radius:12px; width:42px; height:42px; font-size:19px; display:inline-flex; align-items:center; justify-content:center}
@@ -73,18 +73,18 @@ input,select{font-family:inherit}
 .player-card .nm{font-weight:800; font-size:18px}
 .player-card .meta{color:var(--muted); font-size:13px; margin-top:2px}
 .stat-row{display:flex; gap:8px; margin-top:12px}
-.stat{flex:1; background:#fbf9f6; border:1px solid var(--line); border-radius:12px; padding:9px 6px; text-align:center}
+.stat{flex:1; background:#121215; border:1px solid var(--line); border-radius:12px; padding:9px 6px; text-align:center}
 .stat b{display:block; font-size:18px}
 .stat span{font-size:11.5px; color:var(--muted)}
 .diff-row{display:flex; gap:8px}
-.diff-row button{flex:1; border:1.5px solid var(--line); background:#fff; border-radius:12px; padding:11px 4px; font-weight:800; font-size:15px}
-.diff-row button.on{border-color:var(--red); color:var(--red); background:#fdf1f3}
+.diff-row button{flex:1; border:1.5px solid var(--line); background:var(--card); border-radius:12px; padding:11px 4px; font-weight:800; font-size:15px; color:var(--ink)}
+.diff-row button.on{border-color:var(--red); color:var(--red-hi); background:rgba(232,17,45,.14)}
 .diff-row small{display:block; font-weight:400; color:var(--muted); font-size:11.5px; margin-top:2px}
 .season-title{display:flex; align-items:center; gap:8px; margin:20px 2px 4px; font-size:18px; font-weight:800; border-right:4px solid var(--red); padding-right:9px}
 .season-title .lock-note{font-size:12px; color:var(--muted); font-weight:400}
 .ep{display:flex; align-items:center; gap:12px; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:13px 14px; margin-top:9px; width:100%; text-align:right}
-.ep .n{width:40px; height:40px; border-radius:12px; background:#f3efe9; font-weight:800; display:flex; align-items:center; justify-content:center; font-size:17px; flex:none}
-.ep.cur{border-color:var(--red); box-shadow:0 3px 14px rgba(200,16,46,.12)}
+.ep .n{width:40px; height:40px; border-radius:12px; background:#26262c; font-weight:800; display:flex; align-items:center; justify-content:center; font-size:17px; flex:none}
+.ep.cur{border-color:var(--red); box-shadow:0 3px 14px rgba(232,17,45,.25)}
 .ep.cur .n{background:var(--red); color:#fff}
 .ep.done .n{background:var(--ok); color:#fff}
 .ep.locked{opacity:.55}
@@ -100,25 +100,25 @@ input,select{font-family:inherit}
 /* ---------- episode player ---------- */
 .meters{display:grid; grid-template-columns:1fr 1fr; gap:7px 10px; margin-top:4px}
 .meter{font-size:11.5px; color:var(--muted)}
-.meter .bar{height:7px; background:#ece7e0; border-radius:99px; overflow:hidden; margin-top:3px}
+.meter .bar{height:7px; background:#26262c; border-radius:99px; overflow:hidden; margin-top:3px}
 .meter .fill{height:100%; background:var(--ok); border-radius:99px; transition:width .5s ease, background .3s}
 .meter.low .fill{background:var(--bad)}
-.timer-wrap{height:9px; background:#ece7e0; border-radius:99px; overflow:hidden; margin:12px 0 4px}
+.timer-wrap{height:9px; background:#26262c; border-radius:99px; overflow:hidden; margin:12px 0 4px}
 .timer-fill{height:100%; background:var(--red); width:100%; border-radius:99px}
 .timer-num{text-align:left; font-size:12.5px; color:var(--muted); font-weight:700; direction:ltr}
 .scene-txt{font-size:16.5px; line-height:2; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px 16px; margin-top:12px}
 .dec-prompt{font-size:18px; font-weight:800; line-height:1.9; margin:16px 2px 4px}
 .opt{display:block; width:100%; text-align:right; background:var(--card); border:1.5px solid var(--line); border-radius:14px; padding:15px 14px; font-size:16px; line-height:1.8; margin-top:9px; font-weight:700}
 .opt:active{transform:scale(.99)}
-.opt.picked-ok{border-color:var(--ok); background:#eefaf3}
-.opt.picked-bad{border-color:var(--bad); background:#fdf0ef}
+.opt.picked-ok{border-color:var(--ok); background:rgba(47,191,113,.13)}
+.opt.picked-bad{border-color:var(--bad); background:rgba(255,80,64,.12)}
 .opt.dim{opacity:.55}
 .opt .tag{float:left; font-size:12px; font-weight:800}
 .feedback{margin-top:14px}
 .stars-big{text-align:center; font-size:40px; color:var(--gold); letter-spacing:6px; margin:8px 0}
 .summary-nums{display:flex; gap:8px}
-.know-card{background:linear-gradient(160deg,#fff8ea,#fdf3d7); border:1px solid #ecd9a0; border-radius:14px; padding:15px 16px; margin-top:14px}
-.know-card h4{margin:0 0 8px; color:#8a6d1f; font-size:16px}
+.know-card{background:linear-gradient(160deg,#2b2110,#211a0c); border:1px solid #5c4a1e; border-radius:14px; padding:15px 16px; margin-top:14px}
+.know-card h4{margin:0 0 8px; color:#e8c877; font-size:16px}
 .know-card ul{margin:0; padding-inline-start:18px; line-height:2; font-size:14.5px}
 .fail-box{text-align:center; padding:10px 0}
 .fail-box .big{font-size:44px}
@@ -128,11 +128,11 @@ input,select{font-family:inherit}
 table.lb{width:100%; border-collapse:collapse; margin-top:8px}
 table.lb td, table.lb th{padding:10px 6px; border-bottom:1px solid var(--line); font-size:15px; text-align:right}
 table.lb tr.me td{font-weight:800; color:var(--red)}
-.badge{display:inline-block; font-size:11px; font-weight:800; border-radius:99px; padding:2px 8px; background:#f3efe9; color:var(--muted)}
-.badge.vol{background:#fdf1f3; color:var(--red)}
+.badge{display:inline-block; font-size:11px; font-weight:800; border-radius:99px; padding:2px 8px; background:#26262c; color:var(--muted)}
+.badge.vol{background:rgba(232,17,45,.16); color:var(--red-hi)}
 .footer-note{text-align:center; color:var(--muted); font-size:12px; margin-top:22px; line-height:1.9}
 canvas#cardCanvas{width:100%; border-radius:14px; border:1px solid var(--line)}
-.order-chip{display:inline-block; background:#f3efe9; border-radius:10px; padding:8px 12px; margin:0 0 8px 8px; font-size:14px; font-weight:700}
+.order-chip{display:inline-block; background:#26262c; border-radius:10px; padding:8px 12px; margin:0 0 8px 8px; font-size:14px; font-weight:700}
 .order-chip.done{background:var(--ok); color:#fff}
 </style>
 </head>
@@ -196,7 +196,7 @@ canvas#cardCanvas{width:100%; border-radius:14px; border:1px solid var(--line)}
         <div class="field"><label>الاسم</label><input id="gName" type="text" autocomplete="name"></div>
         <div class="field"><label>رقم التليفون</label><input id="gPhone" type="tel" dir="ltr" autocomplete="tel"></div>
         <div class="field"><label>رقم سري من اختيارك (٦ أحرف/أرقام على الأقل) — هتدخل بيه بعد كده</label><input id="gPin" type="password" dir="ltr" autocomplete="new-password"></div>
-        <div class="consent">بالتسجيل أنت موافق إننا نحفظ اسمك ورقم تليفونك ونتيجتك في اللعبة عشان حسابك ولوحة الأوائل. الاسم اللي بيظهر في اللوحة العامة هو الاسم الأول وحرف من الاسم الأخير بس. مش بنطلب رقم قومي ومش بنشارك بياناتك مع حد.</div>
+        <div class="consent">بالتسجيل أنت موافق إننا نحفظ اسمك ورقم تليفونك ونتيجتك في اللعبة عشان حسابك ولوحة الأوائل. اسمك بيظهر كامل في اللوحة العامة مع نقاطك بس، من غير رقم تليفونك أو أي بيانات تانية. مش بنطلب رقم قومي ومش بنشارك بياناتك مع حد.</div>
         <button class="btn btn-dark" id="btnVisSignup">تسجيل وبدء اللعب</button>
         <div class="msg" id="visNewMsg"></div>
       </div>

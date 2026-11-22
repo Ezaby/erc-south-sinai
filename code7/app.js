@@ -538,7 +538,7 @@ async function finishEpisode(failed) {
   renderMetersInto(sum);
   if (ep.card) {
     const kc = document.createElement('div'); kc.className = 'know-card';
-    kc.innerHTML = `<h4>📖 بطاقة معرفة جديدة: ${ep.card.title}</h4><ul>${ep.card.lines.map(l => `<li>${l}</li>`).join('')}</ul><p style="font-size:12.5px; color:#8a6d1f; margin:8px 0 0">اتحفظت في مكتبة المعرفة بتاعتك.</p>`;
+    kc.innerHTML = `<h4>📖 بطاقة معرفة جديدة: ${ep.card.title}</h4><ul>${ep.card.lines.map(l => `<li>${l}</li>`).join('')}</ul><p style="font-size:12.5px; color:#c9a44e; margin:8px 0 0">اتحفظت في مكتبة المعرفة بتاعتك.</p>`;
     body.appendChild(kc);
   }
   if (streakLine) { const w2 = document.createElement('div'); w2.style.marginTop = '12px'; body.appendChild(w2); setBubble(w2, streakLine, 'haneen-celebrate.webp'); }
@@ -729,7 +729,7 @@ function renderLibrary() {
   }
   cards.forEach(({ep, s}) => {
     const kc = document.createElement('div'); kc.className = 'know-card';
-    kc.innerHTML = `<h4>📖 ${ep.card.title}</h4><p style="font-size:12px; color:#8a6d1f; margin:0 0 6px">من «${ep.title}» — الموسم ${AR(s.num)}</p><ul>${ep.card.lines.map(l => `<li>${l}</li>`).join('')}</ul>`;
+    kc.innerHTML = `<h4>📖 ${ep.card.title}</h4><p style="font-size:12px; color:#c9a44e; margin:0 0 6px">من «${ep.title}» — الموسم ${AR(s.num)}</p><ul>${ep.card.lines.map(l => `<li>${l}</li>`).join('')}</ul>`;
     body.appendChild(kc);
   });
 }
@@ -741,29 +741,30 @@ async function drawCard() {
   const W = 1080, H = 1350;
   try { await document.fonts.ready; } catch (e) {}
   const [logo, han] = await Promise.all([loadImg('assets/logo.png'), loadImg('assets/haneen-full.webp')]);
-  // background: rich red gradient + soft radial glow
-  const grad = ctx.createLinearGradient(0, 0, W, H);
-  grad.addColorStop(0, '#b30d27'); grad.addColorStop(0.55, '#8f0a20'); grad.addColorStop(1, '#5f0715');
-  ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
-  const glow = ctx.createRadialGradient(W / 2, 330, 60, W / 2, 330, 620);
-  glow.addColorStop(0, 'rgba(255,255,255,.14)'); glow.addColorStop(1, 'rgba(255,255,255,0)');
+  // background: black with a deep red glow
+  ctx.fillStyle = '#0a0a0c'; ctx.fillRect(0, 0, W, H);
+  const glow = ctx.createRadialGradient(W / 2, 300, 60, W / 2, 300, 760);
+  glow.addColorStop(0, 'rgba(232,17,45,.34)'); glow.addColorStop(1, 'rgba(232,17,45,0)');
   ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H);
-  // double gold frame
-  ctx.strokeStyle = 'rgba(217,164,65,.95)'; ctx.lineWidth = 6; ctx.strokeRect(34, 34, W - 68, H - 68);
-  ctx.strokeStyle = 'rgba(217,164,65,.45)'; ctx.lineWidth = 2; ctx.strokeRect(56, 56, W - 112, H - 112);
+  const glow2 = ctx.createRadialGradient(W / 2, H - 120, 40, W / 2, H - 120, 560);
+  glow2.addColorStop(0, 'rgba(232,17,45,.16)'); glow2.addColorStop(1, 'rgba(232,17,45,0)');
+  ctx.fillStyle = glow2; ctx.fillRect(0, 0, W, H);
+  // double red frame
+  ctx.strokeStyle = 'rgba(232,17,45,.95)'; ctx.lineWidth = 6; ctx.strokeRect(34, 34, W - 68, H - 68);
+  ctx.strokeStyle = 'rgba(232,17,45,.40)'; ctx.lineWidth = 2; ctx.strokeRect(56, 56, W - 112, H - 112);
   ctx.textAlign = 'center';
-  // logo in a white medallion
+  // logo in a white medallion with a red ring
   ctx.beginPath(); ctx.arc(W / 2, 218, 108, 0, Math.PI * 2);
   ctx.fillStyle = '#ffffff'; ctx.fill();
-  ctx.lineWidth = 5; ctx.strokeStyle = '#d9a441'; ctx.stroke();
+  ctx.lineWidth = 5; ctx.strokeStyle = '#e8112d'; ctx.stroke();
   if (logo) { ctx.save(); ctx.beginPath(); ctx.arc(W / 2, 218, 100, 0, Math.PI * 2); ctx.clip(); ctx.drawImage(logo, W / 2 - 100, 118, 200, 200); ctx.restore(); }
   // slogan
-  ctx.fillStyle = '#f6d488'; ctx.font = '800 41px Almarai, sans-serif';
+  ctx.fillStyle = '#ff2b3f'; ctx.font = '800 41px Almarai, sans-serif';
   ctx.fillText('كل ثانية بتفرق… وكل قرار صح معناه نبضة بتكمل', W / 2, 402);
   // divider
-  ctx.strokeStyle = 'rgba(246,212,136,.7)'; ctx.lineWidth = 2;
+  ctx.strokeStyle = 'rgba(232,17,45,.7)'; ctx.lineWidth = 2;
   ctx.beginPath(); ctx.moveTo(W / 2 - 190, 448); ctx.lineTo(W / 2 + 190, 448); ctx.stroke();
-  ctx.fillStyle = '#d9a441'; ctx.font = '30px Almarai, sans-serif';
+  ctx.fillStyle = '#e8112d'; ctx.font = '30px Almarai, sans-serif';
   ctx.fillText('◆', W / 2, 460);
   // Haneen avatar — framed portrait with gold ring, right side; player block on the left
   const ax = 618, ay = 512, aw = 330, ah = 420;
@@ -778,13 +779,13 @@ async function drawCard() {
     ctx.restore();
     ctx.beginPath();
     if (ctx.roundRect) ctx.roundRect(ax, ay, aw, ah, 26); else ctx.rect(ax, ay, aw, ah);
-    ctx.lineWidth = 5; ctx.strokeStyle = '#d9a441'; ctx.stroke();
+    ctx.lineWidth = 5; ctx.strokeStyle = '#e8112d'; ctx.stroke();
     // name plate under her photo
-    ctx.fillStyle = '#d9a441';
+    ctx.fillStyle = '#e8112d';
     ctx.beginPath();
     if (ctx.roundRect) ctx.roundRect(ax, ay + ah - 58, aw, 58, [0, 0, 26, 26]); else ctx.rect(ax, ay + ah - 58, aw, 58);
     ctx.fill();
-    ctx.fillStyle = '#231a04'; ctx.font = '800 32px Almarai, sans-serif';
+    ctx.fillStyle = '#ffffff'; ctx.font = '800 32px Almarai, sans-serif';
     ctx.fillText('القائدة حنين', ax + aw / 2, ay + ah - 18);
   }
   // player block (left of Haneen)
@@ -800,12 +801,12 @@ async function drawCard() {
   const rw = ctx.measureText(rankTxt).width + 64;
   ctx.beginPath();
   if (ctx.roundRect) ctx.roundRect(cx - rw / 2, 692, rw, 66, 33); else ctx.rect(cx - rw / 2, 692, rw, 66);
-  ctx.strokeStyle = '#f6d488'; ctx.lineWidth = 2.5; ctx.stroke();
-  ctx.fillStyle = '#f6d488'; ctx.fillText(rankTxt, cx, 738);
+  ctx.strokeStyle = '#ff2b3f'; ctx.lineWidth = 2.5; ctx.stroke();
+  ctx.fillStyle = '#ff2b3f'; ctx.fillText(rankTxt, cx, 738);
   // points
   ctx.fillStyle = '#ffffff'; ctx.font = '800 128px Almarai, sans-serif';
   ctx.fillText(AR(totalPoints()), cx, 906);
-  ctx.fillStyle = '#f6d488'; ctx.font = '700 36px Almarai, sans-serif';
+  ctx.fillStyle = '#ff2b3f'; ctx.font = '700 36px Almarai, sans-serif';
   ctx.fillText('نقطة', cx, 962);
   // stars line — single elegant row
   const st = totalStars(), max = allEpisodes().length * 3;
@@ -814,7 +815,7 @@ async function drawCard() {
   ctx.fillStyle = '#d9a441'; ctx.font = '44px Almarai, sans-serif';
   ctx.fillText('★', W / 2, 1112);
   // footer
-  ctx.strokeStyle = 'rgba(246,212,136,.5)'; ctx.lineWidth = 2;
+  ctx.strokeStyle = 'rgba(232,17,45,.5)'; ctx.lineWidth = 2;
   ctx.beginPath(); ctx.moveTo(W / 2 - 300, 1168); ctx.lineTo(W / 2 + 300, 1168); ctx.stroke();
   ctx.fillStyle = '#ffffff'; ctx.font = '700 37px Almarai, sans-serif';
   ctx.fillText('الهلال الأحمر المصري — فرع جنوب سيناء', W / 2, 1232);
