@@ -33,7 +33,10 @@ input,select{font-family:inherit}
 .hero .slogan{font-size:20px; font-weight:800; color:var(--red); margin:8px 0 2px; line-height:1.7}
 .hero .sub{color:var(--muted); font-size:13.5px; margin:0}
 .haneen-row{display:flex; gap:12px; align-items:flex-end; margin:18px 0 6px}
-.haneen-row img{width:104px; height:150px; object-fit:contain; object-position:bottom; flex:none}
+.haneen-row img{width:96px; height:126px; object-fit:cover; object-position:top center; border-radius:14px; border:2px solid var(--line); box-shadow:0 4px 14px rgba(0,0,0,.10); background:#fff; flex:none}
+.haneen-fig{display:flex; flex-direction:column; flex:none; width:96px}
+.haneen-fig img{width:96px; height:126px; border-bottom-left-radius:0; border-bottom-right-radius:0; border-bottom:none}
+.haneen-fig span{background:var(--red); color:#fff; font-size:12.5px; font-weight:800; text-align:center; padding:5px 2px; border-radius:0 0 14px 14px}
 .bubble{background:var(--card); border:1px solid var(--line); border-radius:18px; border-bottom-right-radius:4px; padding:12px 14px; font-size:16px; line-height:1.9; flex:1; min-height:96px; box-shadow:0 2px 10px rgba(0,0,0,.04)}
 .bubble .who{font-weight:800; color:var(--red); font-size:13px; margin-bottom:2px}
 .bubble .txt{min-height:56px}
@@ -144,8 +147,8 @@ canvas#cardCanvas{width:100%; border-radius:14px; border:1px solid var(--line)}
       <p class="sub">الهلال الأحمر المصري — فرع جنوب سيناء</p>
     </div>
     <div class="haneen-row">
-      <img src="assets/haneen-full.webp" alt="القائدة حنين">
-      <div class="bubble"><div class="who">القائدة حنين</div><div class="txt" id="introTxt"></div></div>
+      <div class="haneen-fig"><img src="assets/haneen-full.webp" alt="القائدة حنين"><span>القائدة حنين</span></div>
+      <div class="bubble"><div class="txt" id="introTxt"></div></div>
     </div>
     <div id="authMain">
       <p style="font-weight:800; font-size:17px; margin:14px 2px 0">أنت مين؟</p>
