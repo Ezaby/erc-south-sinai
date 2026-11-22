@@ -106,7 +106,9 @@ input,select{font-family:inherit}
 .timer-wrap{height:9px; background:#26262c; border-radius:99px; overflow:hidden; margin:12px 0 4px}
 .timer-fill{height:100%; background:var(--red); width:100%; border-radius:99px}
 .timer-num{text-align:left; font-size:12.5px; color:var(--muted); font-weight:700; direction:ltr}
-.scene-txt{font-size:16.5px; line-height:2; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px 16px; margin-top:12px}
+#bgRain{position:fixed; inset:0; width:100%; height:100%; object-fit:cover; z-index:0; opacity:.5; pointer-events:none}
+  #scr-play .topbar, #scr-play .meters, #scr-play #playBody{position:relative; z-index:1}
+  .scene-txt{font-size:16.5px; line-height:2; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px 16px; margin-top:12px}
 .dec-prompt{font-size:18px; font-weight:800; line-height:1.9; margin:16px 2px 4px}
 .opt{display:block; width:100%; text-align:right; background:var(--card); border:1.5px solid var(--line); border-radius:14px; padding:15px 14px; font-size:16px; line-height:1.8; margin-top:9px; font-weight:700}
 .opt:active{transform:scale(.99)}
@@ -252,6 +254,7 @@ canvas#cardCanvas{width:100%; border-radius:14px; border:1px solid var(--line)}
 
   <!-- ======= EPISODE PLAYER ======= -->
   <section id="scr-play" class="screen hidden">
+    <video id="bgRain" src="assets/rain-bg-s2.mp4" muted loop playsinline preload="auto" hidden></video>
     <div class="topbar">
       <div class="brand"><img src="assets/logo.png" alt=""> <span id="playTitle">حلقة</span></div>
       <button class="icon-btn" id="btnQuitEp">✕</button>

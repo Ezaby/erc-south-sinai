@@ -357,6 +357,8 @@ function startEpisode(season, ep) {
         wrongs: 0, points: 0, correctCount: 0, hintUsed: false, failed: false, timer: null, remain: 0};
   el('playTitle').textContent = `الموسم ${AR(season.num)} — الحلقة ${AR(ep.num)}`;
   show('scr-play');
+  const rv = el('bgRain');
+  if (rv) { const on = season.num === 2; rv.hidden = !on; if (on) { const pr = rv.play(); if (pr && pr.catch) pr.catch(() => {}); } else { rv.pause(); } }
   renderMeters();
   const body = el('playBody'); body.innerHTML = '';
   const introLines = [];
@@ -381,7 +383,7 @@ function startEpisode(season, ep) {
   } else {
     body.appendChild(btn);
   }
-  el('btnQuitEp').onclick = () => { stopEpTimer(); renderHome(); show('scr-home'); };
+  el('btnQuitEp').onclick = () => { stopEpTimer(); const r2 = el('bgRain'); if (r2) { r2.pause(); r2.hidden = true; } renderHome(); show('scr-home'); };
 }
 function stopEpTimer() { if (EP && EP.timer) { clearInterval(EP.timer); EP.timer = null; } stopHeartbeat(); }
 
@@ -490,6 +492,7 @@ function chooseOption(chosen, btn, optsWrap) {
   fb.appendChild(next);
 }
 async function finishEpisode(failed) {
+  const rvF = el('bgRain'); if (rvF) { rvF.pause(); rvF.hidden = true; }
   stopEpTimer();
   const ep = EP.ep;
   const body = el('playBody'); body.innerHTML = '';
