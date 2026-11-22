@@ -64,17 +64,27 @@ function heartbeat(mode) { // 'normal' | 'slow' | 'dying' | null
   try { hb.cur.currentTime = 0; hb.cur.play().catch(() => {}); } catch (e) {}
 }
 function stopHeartbeat() { heartbeat(null); }
+let CURRENT_LINE_AUDIO = null;
+function stopLineAudio() {
+  if (CURRENT_LINE_AUDIO) {
+    try { CURRENT_LINE_AUDIO.pause(); CURRENT_LINE_AUDIO.currentTime = 0; } catch (e) {}
+    CURRENT_LINE_AUDIO = null;
+  }
+}
 function lineAudio(lineId) {
-  if (!lineId || !RECORDED.has(lineId) || SETTINGS.muted) return;
+  if (!lineId || !RECORDED.has(lineId) || SETTINGS.muted) return null;
+  stopLineAudio(); // Haneen speaks one line at a time — never two voices together
   const a = new Audio('audio/' + lineId + '.mp3');
+  CURRENT_LINE_AUDIO = a;
   a.play().catch(() => {}); // missing file = silent, text carries on
+  return a;
 }
 
 /* =============== typewriter =============== */
 function typewrite(node, text, lineId) {
   if (node._tw) clearInterval(node._tw);
   node.textContent = '';
-  lineAudio(lineId);
+  const __aud = lineAudio(lineId);
   let i = 0;
   const full = text || '';
   node._tw = setInterval(() => {
@@ -83,6 +93,7 @@ function typewrite(node, text, lineId) {
     if (i >= full.length) { clearInterval(node._tw); node._tw = null; }
   }, 24);
   node.onclick = () => { if (node._tw) { clearInterval(node._tw); node._tw = null; } node.textContent = full; };
+  return __aud;
 }
 function bubbleHTML(img, who) {
   return `<div class="haneen-row"><img src="assets/${img || 'haneen-full.webp'}" alt="القائدة حنين">
@@ -90,7 +101,7 @@ function bubbleHTML(img, who) {
 }
 function setBubble(container, line, img) {
   container.innerHTML = bubbleHTML(img, 'القائدة حنين');
-  typewrite(container.querySelector('.txt'), line.text, line.id);
+  return typewrite(container.querySelector('.txt'), line.text, line.id);
 }
 function lineById(id) { return DATA.lines[id] || {id, text: ''}; }
 
@@ -373,10 +384,19 @@ function startEpisode(season, ep) {
     const playNext = () => {
       if (step >= introLines.length || !document.body.contains(btn)) return;
       const w = document.createElement('div'); body.insertBefore(w, btn);
-      setBubble(w, introLines[step], 'haneen-focus.webp');
+      const aud = setBubble(w, introLines[step], 'haneen-focus.webp');
       const wait = Math.max(2400, introLines[step].text.length * 46);
       step++;
-      setTimeout(playNext, wait);
+      if (aud) {
+        let advanced = false, ended = false, minDone = false;
+        const adv = () => { if (!advanced) { advanced = true; playNext(); } };
+        const tryAdv = () => { if (ended && minDone) adv(); };
+        aud.onended = () => { ended = true; tryAdv(); };
+        setTimeout(() => { minDone = true; tryAdv(); }, Math.min(wait, 2600));
+        setTimeout(adv, wait + 5000); // fallback if the audio stalls
+      } else {
+        setTimeout(playNext, wait);
+      }
     };
     body.appendChild(btn);
     playNext();
@@ -385,7 +405,7 @@ function startEpisode(season, ep) {
   }
   el('btnQuitEp').onclick = () => { stopEpTimer(); const r2 = el('bgRain'); if (r2) { r2.pause(); r2.hidden = true; } renderHome(); show('scr-home'); };
 }
-function stopEpTimer() { if (EP && EP.timer) { clearInterval(EP.timer); EP.timer = null; } stopHeartbeat(); }
+function stopEpTimer() { if (EP && EP.timer) { clearInterval(EP.timer); EP.timer = null; } stopHeartbeat(); stopLineAudio(); }
 
 function renderDecision() {
   const ep = EP.ep, d = ep.decisions[EP.idx];
