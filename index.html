@@ -664,6 +664,10 @@
   .home-code7 img{width:min(300px,74vw);height:auto;display:block}
   /* ---------- weather: interactive cards ---------- */
   .wx-advice{margin:12px 0 0;background:var(--red-soft);border:1px solid var(--line);border-radius:var(--r-md);padding:10px 14px;font-size:.95rem;color:var(--ink)}
+  .wx-speak-btn{margin-top:10px;background:var(--red);color:#fff;border:none;border-radius:999px;padding:9px 18px;font-family:inherit;font-size:.95rem;font-weight:700;cursor:pointer;box-shadow:0 3px 10px rgba(200,16,46,.3)}
+  .wx-speak-btn:active{transform:scale(.97)}
+  .wx-avatar.talking{animation:samiaBob .32s ease-in-out infinite alternate}
+  @keyframes samiaBob{from{transform:translateY(0) rotate(-1deg)}to{transform:translateY(-3px) rotate(1deg)}}
   .wx-advice:empty{display:none}
   .wx-advice b{color:var(--red-deep)}
   .wx-advice[data-state="alert"]{background:#fdeef0;border-color:var(--red)}
@@ -1449,6 +1453,7 @@
         <p class="wx-role">دليلك لأحوال الطقس في جنوب سيناء</p>
         <p class="wx-welcome">أهلاً بيكم، أنا سامية. هنا هتلاقوا أحوال الطقس في مدن جنوب سيناء محدثة أول بأول، عشان نكون دايمًا جاهزين — خصوصًا في موسم المطر والسيول.</p>
         <p class="wx-advice" id="wxAdvice" aria-live="polite"></p>
+        <button type="button" class="wx-speak-btn" id="wxSpeakBtn">🔊 اسمع نصيحة سامية</button>
       </div>
     </div>
 
@@ -2715,6 +2720,7 @@ document.getElementById("memoryForm").addEventListener("submit", function(ev){
     }
     var el = document.getElementById("wxAdvice");
     if(el){ el.innerHTML = txt; el.setAttribute("data-state", state); }
+    window.__svState = state; window.__svCity = cityIdx; window.__svDay = dayIdx;
     var img = document.getElementById("wxSamiaImg");
     if(img && img.getAttribute("src") !== WX_POSES[state]){ img.src = WX_POSES[state]; }
     /* floating Samia mirrors the very same state (one shared source) */
@@ -2729,6 +2735,73 @@ document.getElementById("memoryForm").addEventListener("submit", function(ev){
     var fabBubble = document.getElementById("wxSamiaFabBubble");
     if(fabBubble){ fabBubble.innerHTML = txt; fabBubble.hidden = false; }
   }
+
+  /* ---------- Samia speaks: pre-recorded advice clips (Fish Audio) ---------- */
+  var SAMIA_CLIPS = { intro:"voice/samia-intro.mp3", mild:"voice/samia-mild.mp3", hot:"voice/samia-hot.mp3", veryhot:"voice/samia-veryhot.mp3", cold:"voice/samia-cold.mp3", wind:"voice/samia-wind.mp3", rain:"voice/samia-rain.mp3", flood:"voice/samia-flood.mp3" };
+  var __svAudio = null, __svTimer = null, __svIntroDone = false;
+  window.__svPlaying = false;
+  function samiaPickClip(){
+    var st = window.__svState || "calm";
+    var loc = (typeof WX_DATA !== "undefined" ? WX_DATA : [])[window.__svCity || 0] || {};
+    var daily = loc.daily || {};
+    var d = window.__svDay || 0;
+    var tmax = (daily.temperature_2m_max || [])[d];
+    var sum = (daily.precipitation_sum || [])[d];
+    var prob = (daily.precipitation_probability_max || [])[d];
+    if(st === "alert") return ((typeof sum === "number" && sum >= 15) || (typeof prob === "number" && prob >= 80)) ? "flood" : "rain";
+    if(st === "heat") return (typeof tmax === "number" && tmax >= 40) ? "veryhot" : "hot";
+    if(st === "wind") return "wind";
+    return (typeof tmax === "number" && tmax <= 20) ? "cold" : "mild";
+  }
+  function samiaStopTalk(){
+    if(__svTimer){ clearInterval(__svTimer); __svTimer = null; }
+    if(__svAudio){ try{ __svAudio.pause(); }catch(e){} __svAudio = null; }
+    window.__svPlaying = false;
+    var av = document.querySelector(".wx-avatar"); if(av) av.classList.remove("talking");
+    var btn = document.getElementById("wxSpeakBtn"); if(btn) btn.textContent = "🔊 اسمع نصيحة سامية";
+    if(typeof window.__svCity === "number") updateSamia(window.__svCity, window.__svDay || 0);
+  }
+  window.__svStop = samiaStopTalk;
+  function samiaPlay(src, next){
+    var img = document.getElementById("wxSamiaImg");
+    var av = document.querySelector(".wx-avatar");
+    var poseSrc = img ? img.getAttribute("src") : null;
+    var showTalk = false;
+    if(av) av.classList.add("talking");
+    if(img){
+      __svTimer = setInterval(function(){
+        showTalk = !showTalk;
+        img.src = showTalk ? "samia-talk.webp" : poseSrc;
+      }, 170);
+    }
+    __svAudio = new Audio(src);
+    __svAudio.onended = function(){
+      if(__svTimer){ clearInterval(__svTimer); __svTimer = null; }
+      if(av) av.classList.remove("talking");
+      __svAudio = null;
+      if(next){ next(); } else { samiaStopTalk(); }
+    };
+    __svAudio.onerror = function(){ samiaStopTalk(); };
+    var pr = __svAudio.play();
+    if(pr && pr.catch) pr.catch(function(){ samiaStopTalk(); });
+  }
+  function samiaSpeak(){
+    if(window.__svPlaying){ samiaStopTalk(); return; }
+    var btn = document.getElementById("wxSpeakBtn");
+    window.__svPlaying = true;
+    if(btn) btn.textContent = "⏹️ إيقاف";
+    var clip = SAMIA_CLIPS[samiaPickClip()];
+    if(!__svIntroDone){
+      __svIntroDone = true;
+      samiaPlay(SAMIA_CLIPS.intro, function(){ if(window.__svPlaying) samiaPlay(clip, null); });
+    } else {
+      samiaPlay(clip, null);
+    }
+  }
+  (function(){
+    var b = document.getElementById("wxSpeakBtn");
+    if(b) b.addEventListener("click", samiaSpeak);
+  })();
 
   function fmtClock(iso){
     if(!iso) return "—";
