@@ -101,8 +101,10 @@ function bubbleHTML(img, who) {
   return `<div class="haneen-row"><img src="assets/${img || 'haneen-full.webp'}" alt="القائدة حنين">
     <div class="bubble"><div class="who">${who || 'القائدة حنين'}</div><div class="txt"></div></div></div>`;
 }
+const HANEEN_LINES = new Set(['H-001','H-002','H-003','H-004','H-005','H-006','H-007','H-010','H-011','H-012','H-013','H-014','H-015','H-020','H-021','H-022','H-023','H-024','H-030','H-031','H-032','H-033','H-034','H-040','H-041','H-055','H-056','H-058','H-059','H-060','H-061','H-062','H-063','H-064','H-090']);
 function setBubble(container, line, img) {
-  container.innerHTML = bubbleHTML(img, 'القائدة حنين');
+  const mine = HANEEN_LINES.has(line.id);
+  container.innerHTML = bubbleHTML(mine ? img : 'volunteer.webp', mine ? 'القائدة حنين' : 'متطوعة الهلال الأحمر');
   return typewrite(container.querySelector('.txt'), line.text, line.id);
 }
 function lineById(id) { return DATA.lines[id] || {id, text: ''}; }
@@ -446,13 +448,11 @@ function renderDecision() {
   renderMeters();
   const body = el('playBody'); body.innerHTML = '';
   const diff = DIFFS[SETTINGS.difficulty];
-  // scene reminder (short)
-  if (EP.idx === 0) {
-    const fig = document.createElement('div'); fig.className = 'scene-fig';
-    fig.innerHTML = `<img src="assets/scenes/${ep.id}.webp" alt="">`;
-    body.appendChild(fig);
-    if (ep.scene) { const sc = document.createElement('div'); sc.className = 'scene-txt'; sc.textContent = ep.scene; body.appendChild(sc); }
-  }
+  // a living image for every decision
+  const fig = document.createElement('div'); fig.className = 'scene-fig';
+  fig.innerHTML = `<img src="assets/scenes/${ep.id}-d${EP.idx + 1}.webp" alt="">`;
+  body.appendChild(fig);
+  if (EP.idx === 0 && ep.scene) { const sc = document.createElement('div'); sc.className = 'scene-txt'; sc.textContent = ep.scene; body.appendChild(sc); }
   const q = document.createElement('div'); q.className = 'dec-prompt';
   q.textContent = `قرار ${AR(EP.idx + 1)} من ${AR(ep.decisions.length)}: ${d.prompt}`;
   body.appendChild(q);
@@ -694,6 +694,9 @@ function renderFreeQ() {
   const head = document.createElement('p'); head.className = 'q-count';
   head.textContent = `${FREE.title} — موقف ${AR(FREE.idx + 1)} من ${AR(FREE.qs.length)}`;
   body.appendChild(head);
+  const bfig = document.createElement('div'); bfig.className = 'scene-fig';
+  bfig.innerHTML = `<img src="assets/scenes/bank-${s.id}.webp" alt="">`;
+  body.appendChild(bfig);
   const sc = document.createElement('div'); sc.className = 'scene-txt'; sc.textContent = s.s; body.appendChild(sc);
   const q = document.createElement('div'); q.className = 'dec-prompt'; q.textContent = s.q; body.appendChild(q);
   const wrap = document.createElement('div'); body.appendChild(wrap);
