@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CODE 7 — لعبة محاكاة المتطوع | الهلال الأحمر المصري، جنوب سيناء</title>
+<meta name="description" content="لعبة محاكاة مواقف للمتطوع: رحلة من أول يوم بالشارة لحد قيادة فريق. الهلال الأحمر المصري، فرع جنوب سيناء.">
+<link rel="icon" href="assets/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Almarai:wght@400;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --red:#c8102e; --red-dark:#8f0b21; --ink:#1c1e22; --muted:#6b7280;
+  --bg:#f6f4f1; --card:#ffffff; --line:#e7e2dc; --gold:#d9a441;
+  --ok:#1e9e62; --bad:#d43a2f; --radius:16px;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+html,body{margin:0; padding:0}
+body{font-family:'Almarai',system-ui,sans-serif; background:var(--bg); color:var(--ink); min-height:100dvh}
+button{font-family:inherit; cursor:pointer}
+input,select{font-family:inherit}
+.hidden{display:none !important}
+
+/* ---------- layout ---------- */
+#app{max-width:520px; margin:0 auto; min-height:100dvh; display:flex; flex-direction:column; position:relative}
+.screen{flex:1; display:flex; flex-direction:column; padding:18px 16px 28px; animation:fade .25s ease}
+@keyframes fade{from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:none}}
+
+/* ---------- start / auth ---------- */
+.hero{text-align:center; padding-top:10px}
+.hero img.logo{width:132px; height:132px; object-fit:contain}
+.hero h1{font-size:30px; font-weight:800; margin:6px 0 2px; letter-spacing:.5px}
+.hero .sub{color:var(--muted); font-size:14px; margin:0}
+.haneen-row{display:flex; gap:12px; align-items:flex-end; margin:18px 0 6px}
+.haneen-row img{width:104px; height:150px; object-fit:contain; object-position:bottom; flex:none}
+.bubble{background:var(--card); border:1px solid var(--line); border-radius:18px; border-bottom-right-radius:4px; padding:12px 14px; font-size:16px; line-height:1.9; flex:1; min-height:96px; box-shadow:0 2px 10px rgba(0,0,0,.04)}
+.bubble .who{font-weight:800; color:var(--red); font-size:13px; margin-bottom:2px}
+.bubble .txt{min-height:56px}
+.bubble .next-hint{color:var(--muted); font-size:12px; margin-top:6px}
+.btn{display:block; width:100%; border:none; border-radius:14px; padding:15px 16px; font-size:17px; font-weight:800; margin-top:10px; transition:transform .06s ease, opacity .2s}
+.btn:active{transform:scale(.985)}
+.btn-red{background:var(--red); color:#fff}
+.btn-dark{background:var(--ink); color:#fff}
+.btn-ghost{background:var(--card); color:var(--ink); border:1.5px solid var(--line)}
+.btn-gold{background:var(--gold); color:#231a04}
+.btn[disabled]{opacity:.45; pointer-events:none}
+.btn.small{padding:11px 14px; font-size:15px; width:auto; display:inline-block; margin-top:0}
+.card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:16px; margin-top:14px}
+.card h3{margin:0 0 8px; font-size:17px}
+.field{margin-top:10px}
+.field label{display:block; font-size:13px; font-weight:700; color:var(--muted); margin-bottom:5px}
+.field input{width:100%; border:1.5px solid var(--line); border-radius:12px; padding:13px 12px; font-size:16px; background:#fff; color:var(--ink)}
+.field input:focus{outline:none; border-color:var(--red)}
+.msg{font-size:14px; line-height:1.8; margin-top:10px; min-height:20px}
+.msg.err{color:var(--bad)} .msg.ok{color:var(--ok)}
+.tabs{display:flex; gap:8px; margin-top:14px}
+.tabs button{flex:1; border:1.5px solid var(--line); background:var(--card); border-radius:12px; padding:11px 6px; font-size:15px; font-weight:700}
+.tabs button.on{background:var(--ink); color:#fff; border-color:var(--ink)}
+.consent{font-size:12.5px; color:var(--muted); line-height:1.9; background:#fbf9f6; border:1px dashed var(--line); border-radius:12px; padding:10px 12px; margin-top:12px}
+.linkish{background:none; border:none; color:var(--red); font-weight:700; font-size:14px; padding:6px}
+
+/* ---------- home / journey ---------- */
+.topbar{display:flex; align-items:center; justify-content:space-between; gap:10px}
+.topbar .brand{display:flex; align-items:center; gap:9px; font-weight:800; font-size:19px}
+.topbar .brand img{width:38px; height:38px; object-fit:contain}
+.icon-btn{background:var(--card); border:1.5px solid var(--line); border-radius:12px; width:42px; height:42px; font-size:19px; display:inline-flex; align-items:center; justify-content:center}
+.player-card{display:flex; gap:12px; align-items:center}
+.player-card .avatar{width:56px; height:56px; border-radius:50%; background:linear-gradient(145deg,var(--red),var(--red-dark)); color:#fff; display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:800; flex:none}
+.player-card .nm{font-weight:800; font-size:18px}
+.player-card .meta{color:var(--muted); font-size:13px; margin-top:2px}
+.stat-row{display:flex; gap:8px; margin-top:12px}
+.stat{flex:1; background:#fbf9f6; border:1px solid var(--line); border-radius:12px; padding:9px 6px; text-align:center}
+.stat b{display:block; font-size:18px}
+.stat span{font-size:11.5px; color:var(--muted)}
+.diff-row{display:flex; gap:8px}
+.diff-row button{flex:1; border:1.5px solid var(--line); background:#fff; border-radius:12px; padding:11px 4px; font-weight:800; font-size:15px}
+.diff-row button.on{border-color:var(--red); color:var(--red); background:#fdf1f3}
+.diff-row small{display:block; font-weight:400; color:var(--muted); font-size:11.5px; margin-top:2px}
+.season-title{display:flex; align-items:center; gap:8px; margin:20px 2px 4px; font-size:18px; font-weight:800}
+.season-title .lock-note{font-size:12px; color:var(--muted); font-weight:400}
+.ep{display:flex; align-items:center; gap:12px; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:13px 14px; margin-top:9px; width:100%; text-align:right}
+.ep .n{width:40px; height:40px; border-radius:12px; background:#f3efe9; font-weight:800; display:flex; align-items:center; justify-content:center; font-size:17px; flex:none}
+.ep.cur{border-color:var(--red); box-shadow:0 3px 14px rgba(200,16,46,.12)}
+.ep.cur .n{background:var(--red); color:#fff}
+.ep.done .n{background:var(--ok); color:#fff}
+.ep.locked{opacity:.55}
+.ep .t{flex:1}
+.ep .t b{font-size:16px}
+.ep .t span{display:block; color:var(--muted); font-size:12.5px; margin-top:1px}
+.ep .stars{color:var(--gold); font-size:15px; letter-spacing:1px; flex:none}
+.menu-grid{display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-top:14px}
+.menu-grid button{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:15px 10px; font-size:15.5px; font-weight:800}
+.menu-grid button small{display:block; font-weight:400; color:var(--muted); font-size:12px; margin-top:3px}
+.menu-grid button[disabled]{opacity:.5}
+
+/* ---------- episode player ---------- */
+.meters{display:grid; grid-template-columns:1fr 1fr; gap:7px 10px; margin-top:4px}
+.meter{font-size:11.5px; color:var(--muted)}
+.meter .bar{height:7px; background:#ece7e0; border-radius:99px; overflow:hidden; margin-top:3px}
+.meter .fill{height:100%; background:var(--ok); border-radius:99px; transition:width .5s ease, background .3s}
+.meter.low .fill{background:var(--bad)}
+.timer-wrap{height:9px; background:#ece7e0; border-radius:99px; overflow:hidden; margin:12px 0 4px}
+.timer-fill{height:100%; background:var(--red); width:100%; border-radius:99px}
+.timer-num{text-align:left; font-size:12.5px; color:var(--muted); font-weight:700; direction:ltr}
+.scene-txt{font-size:16.5px; line-height:2; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px 16px; margin-top:12px}
+.dec-prompt{font-size:18px; font-weight:800; line-height:1.9; margin:16px 2px 4px}
+.opt{display:block; width:100%; text-align:right; background:var(--card); border:1.5px solid var(--line); border-radius:14px; padding:15px 14px; font-size:16px; line-height:1.8; margin-top:9px; font-weight:700}
+.opt:active{transform:scale(.99)}
+.opt.picked-ok{border-color:var(--ok); background:#eefaf3}
+.opt.picked-bad{border-color:var(--bad); background:#fdf0ef}
+.opt.dim{opacity:.55}
+.opt .tag{float:left; font-size:12px; font-weight:800}
+.feedback{margin-top:14px}
+.stars-big{text-align:center; font-size:40px; color:var(--gold); letter-spacing:6px; margin:8px 0}
+.summary-nums{display:flex; gap:8px}
+.know-card{background:linear-gradient(160deg,#fff8ea,#fdf3d7); border:1px solid #ecd9a0; border-radius:14px; padding:15px 16px; margin-top:14px}
+.know-card h4{margin:0 0 8px; color:#8a6d1f; font-size:16px}
+.know-card ul{margin:0; padding-inline-start:18px; line-height:2; font-size:14.5px}
+.fail-box{text-align:center; padding:10px 0}
+.fail-box .big{font-size:44px}
+
+/* ---------- free training / leaderboard ---------- */
+.q-count{color:var(--muted); font-size:13px; margin-top:8px}
+table.lb{width:100%; border-collapse:collapse; margin-top:8px}
+table.lb td, table.lb th{padding:10px 6px; border-bottom:1px solid var(--line); font-size:15px; text-align:right}
+table.lb tr.me td{font-weight:800; color:var(--red)}
+.badge{display:inline-block; font-size:11px; font-weight:800; border-radius:99px; padding:2px 8px; background:#f3efe9; color:var(--muted)}
+.badge.vol{background:#fdf1f3; color:var(--red)}
+.footer-note{text-align:center; color:var(--muted); font-size:12px; margin-top:22px; line-height:1.9}
+canvas#cardCanvas{width:100%; border-radius:14px; border:1px solid var(--line)}
+.order-chip{display:inline-block; background:#f3efe9; border-radius:10px; padding:8px 12px; margin:0 0 8px 8px; font-size:14px; font-weight:700}
+.order-chip.done{background:var(--ok); color:#fff}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ======= START / AUTH ======= -->
+  <section id="scr-auth" class="screen">
+    <div class="hero">
+      <img class="logo" src="assets/logo.png" alt="CODE 7">
+      <h1>CODE 7</h1>
+      <p class="sub">لعبة محاكاة المتطوع — الهلال الأحمر المصري، فرع جنوب سيناء</p>
+    </div>
+    <div class="haneen-row">
+      <img src="assets/haneen-full.webp" alt="القائدة حنين">
+      <div class="bubble"><div class="who">القائدة حنين</div><div class="txt" id="introTxt"></div><div class="next-hint">المس البالونة عشان تكمل بسرعة</div></div>
+    </div>
+    <div id="authMain">
+      <p style="font-weight:800; font-size:17px; margin:14px 2px 0">أنت مين؟</p>
+      <button class="btn btn-red" id="btnIamVolunteer">متطوع في الهلال الأحمر</button>
+      <button class="btn btn-dark" id="btnIamVisitor">زائر — عايز ألعب وأتعلم</button>
+      <p class="footer-note">اللعبة تدريبية ومش بديل عن كورس الإسعافات الأولية.<br>تقدمك بيتحفظ على حسابك وتكمل من أي جهاز.</p>
+    </div>
+
+    <!-- volunteer auth -->
+    <div id="authVolunteer" class="card hidden">
+      <h3>دخول المتطوعين</h3>
+      <div id="volLoggedOut">
+        <div class="field"><label>البريد الإلكتروني (حسابك في موقع الفرع)</label><input id="vEmail" type="email" dir="ltr" autocomplete="email"></div>
+        <div class="field"><label>كلمة السر</label><input id="vPass" type="password" dir="ltr" autocomplete="current-password"></div>
+        <button class="btn btn-red" id="btnVolLogin">دخول</button>
+        <div class="msg" id="volMsg"></div>
+        <p style="font-size:13px; color:var(--muted); line-height:1.9">لسه معندكش حساب في موقع الفرع؟ <button class="linkish" id="linkVolSignup">اعمل حساب واربطه برقم عضويتك</button></p>
+      </div>
+      <div id="volSignup" class="hidden">
+        <div class="field"><label>البريد الإلكتروني</label><input id="sEmail" type="email" dir="ltr" autocomplete="email"></div>
+        <div class="field"><label>كلمة السر (٦ أحرف على الأقل)</label><input id="sPass" type="password" dir="ltr" autocomplete="new-password"></div>
+        <div class="field"><label>رقم العضوية</label><input id="sMemberNo" type="text" inputmode="numeric" dir="ltr"></div>
+        <div class="field"><label>رقم التليفون</label><input id="sPhone" type="tel" dir="ltr" autocomplete="tel"></div>
+        <button class="btn btn-red" id="btnVolSignup">إنشاء الحساب وربط العضوية</button>
+        <div class="msg" id="signupMsg"></div>
+      </div>
+      <div id="volClaim" class="hidden">
+        <p style="line-height:1.9; font-size:14.5px">حسابك داخل، بس لسه مش مربوط برقم عضوية. اربطه عشان تدخل كمتطوع:</p>
+        <div class="field"><label>رقم العضوية</label><input id="cMemberNo" type="text" inputmode="numeric" dir="ltr"></div>
+        <div class="field"><label>رقم التليفون</label><input id="cPhone" type="tel" dir="ltr" autocomplete="tel"></div>
+        <button class="btn btn-red" id="btnVolClaim">ربط العضوية</button>
+        <div class="msg" id="claimMsg"></div>
+      </div>
+      <button class="btn btn-ghost" data-back>رجوع</button>
+    </div>
+
+    <!-- visitor auth -->
+    <div id="authVisitor" class="card hidden">
+      <h3>دخول الزوار</h3>
+      <div class="tabs">
+        <button id="tabVisNew" class="on">تسجيل جديد</button>
+        <button id="tabVisOld">عندي حساب</button>
+      </div>
+      <div id="visNew">
+        <div class="field"><label>الاسم</label><input id="gName" type="text" autocomplete="name"></div>
+        <div class="field"><label>رقم التليفون</label><input id="gPhone" type="tel" dir="ltr" autocomplete="tel"></div>
+        <div class="field"><label>رقم سري من اختيارك (٦ أحرف/أرقام على الأقل) — هتدخل بيه بعد كده</label><input id="gPin" type="password" dir="ltr" autocomplete="new-password"></div>
+        <div class="consent">بالتسجيل أنت موافق إننا نحفظ اسمك ورقم تليفونك ونتيجتك في اللعبة عشان حسابك ولوحة الأوائل. الاسم اللي بيظهر في اللوحة العامة هو الاسم الأول وحرف من الاسم الأخير بس. مش بنطلب رقم قومي ومش بنشارك بياناتك مع حد.</div>
+        <button class="btn btn-dark" id="btnVisSignup">تسجيل وبدء اللعب</button>
+        <div class="msg" id="visNewMsg"></div>
+      </div>
+      <div id="visOld" class="hidden">
+        <div class="field"><label>رقم التليفون</label><input id="gPhone2" type="tel" dir="ltr" autocomplete="tel"></div>
+        <div class="field"><label>الرقم السري</label><input id="gPin2" type="password" dir="ltr" autocomplete="current-password"></div>
+        <button class="btn btn-dark" id="btnVisLogin">دخول</button>
+        <div class="msg" id="visOldMsg"></div>
+      </div>
+      <button class="btn btn-ghost" data-back>رجوع</button>
+    </div>
+  </section>
+
+  <!-- ======= HOME ======= -->
+  <section id="scr-home" class="screen hidden">
+    <div class="topbar">
+      <div class="brand"><img src="assets/logo.png" alt=""> CODE 7</div>
+      <div>
+        <button class="icon-btn" id="btnMute" title="الصوت">🔊</button>
+        <button class="icon-btn" id="btnLogout" title="خروج">🚪</button>
+      </div>
+    </div>
+    <div class="card player-card">
+      <div class="avatar" id="pcAvatar">؟</div>
+      <div style="flex:1">
+        <div class="nm" id="pcName">—</div>
+        <div class="meta" id="pcMeta">—</div>
+        <div class="stat-row">
+          <div class="stat"><b id="pcPoints">٠</b><span>نقطة</span></div>
+          <div class="stat"><b id="pcStars">٠</b><span>نجمة</span></div>
+          <div class="stat"><b id="pcStreak">٠</b><span>أيام متتالية</span></div>
+        </div>
+      </div>
+    </div>
+    <div id="homeBubble"></div>
+    <div class="card">
+      <h3>مستوى التحدي</h3>
+      <div class="diff-row" id="diffRow">
+        <button data-diff="calm">هادئ<small>بدون مؤقت + تلميحات</small></button>
+        <button data-diff="pressure">ضغط<small>١٥ ثانية للقرار</small></button>
+        <button data-diff="nightmare">كابوس<small>٨ ثواني — غلطتين = إعادة</small></button>
+      </div>
+    </div>
+    <div id="journey"></div>
+    <div class="menu-grid">
+      <button id="btnFree" disabled>التدريب الحر<small id="freeNote">بيتفتح بعد الموسم الأول</small></button>
+      <button id="btnBoard">لوحة الأوائل<small>أعلى ١٠ لاعبين</small></button>
+      <button id="btnCard">كارت النتيجة<small>صورة باسمك ورتبتك</small></button>
+      <button id="btnLibrary">مكتبة المعرفة<small>البطاقات اللي فتحتها</small></button>
+    </div>
+    <p class="footer-note">الهلال الأحمر المصري — فرع جنوب سيناء<br>اللعبة تدريبية ومش بديل عن الكورس.</p>
+  </section>
+
+  <!-- ======= EPISODE PLAYER ======= -->
+  <section id="scr-play" class="screen hidden">
+    <div class="topbar">
+      <div class="brand"><img src="assets/logo.png" alt=""> <span id="playTitle">حلقة</span></div>
+      <button class="icon-btn" id="btnQuitEp">✕</button>
+    </div>
+    <div class="meters" id="meters"></div>
+    <div id="playBody"></div>
+  </section>
+
+  <!-- ======= FREE TRAINING ======= -->
+  <section id="scr-free" class="screen hidden">
+    <div class="topbar">
+      <div class="brand"><img src="assets/logo.png" alt=""> التدريب الحر</div>
+      <button class="icon-btn" data-home>✕</button>
+    </div>
+    <div id="freeBody"></div>
+  </section>
+
+  <!-- ======= LEADERBOARD ======= -->
+  <section id="scr-board" class="screen hidden">
+    <div class="topbar">
+      <div class="brand"><img src="assets/logo.png" alt=""> لوحة الأوائل</div>
+      <button class="icon-btn" data-home>✕</button>
+    </div>
+    <div class="tabs">
+      <button data-board="all" class="on">العام</button>
+      <button data-board="volunteer">المتطوعون</button>
+      <button data-board="visitor">الزوار</button>
+    </div>
+    <div class="card"><div id="boardBody">جارٍ التحميل…</div></div>
+  </section>
+
+  <!-- ======= RESULT CARD ======= -->
+  <section id="scr-card" class="screen hidden">
+    <div class="topbar">
+      <div class="brand"><img src="assets/logo.png" alt=""> كارت النتيجة</div>
+      <button class="icon-btn" data-home>✕</button>
+    </div>
+    <div class="card">
+      <canvas id="cardCanvas" width="1080" height="1350"></canvas>
+      <button class="btn btn-red" id="btnDownloadCard">تحميل الكارت</button>
+      <button class="btn btn-gold" id="btnShareCard">مشاركة</button>
+    </div>
+  </section>
+
+  <!-- ======= LIBRARY ======= -->
+  <section id="scr-library" class="screen hidden">
+    <div class="topbar">
+      <div class="brand"><img src="assets/logo.png" alt=""> مكتبة المعرفة</div>
+      <button class="icon-btn" data-home>✕</button>
+    </div>
+    <div id="libraryBody"></div>
+  </section>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>
