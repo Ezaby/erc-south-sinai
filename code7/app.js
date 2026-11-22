@@ -76,8 +76,42 @@ function lineAudio(lineId) {
   stopLineAudio(); // Haneen speaks one line at a time — never two voices together
   const a = new Audio('audio/' + lineId + '.mp3');
   CURRENT_LINE_AUDIO = a;
+  a.addEventListener('playing', () => ambDuck(true));
+  a.addEventListener('ended', () => ambDuck(false));
+  a.addEventListener('playfailed', () => ambDuck(false));
   const pr = a.play(); if (pr && pr.catch) pr.catch(() => { try { a.dispatchEvent(new Event('playfailed')); } catch (e) {} });
   return a;
+}
+
+/* =============== sfx & ambience =============== */
+const _sfx = {};
+function sfx(name, vol) {
+  if (SETTINGS.muted) return null;
+  if (!_sfx[name]) { const a = new Audio('sfx/' + name + '.mp3'); a.preload = 'auto'; _sfx[name] = a; }
+  const a = _sfx[name];
+  try { a.volume = vol == null ? 0.9 : vol; a.currentTime = 0; const p = a.play(); if (p && p.catch) p.catch(() => {}); } catch (e) {}
+  return a;
+}
+let AMB = {name: null, audio: null, vol: 0.5};
+function amb(name, vol) {
+  if (AMB.name === name && AMB.audio) return;
+  ambStop();
+  if (!name || SETTINGS.muted) return;
+  const a = new Audio('sfx/' + name + '.mp3'); a.loop = true; a.volume = 0; a.preload = 'auto';
+  AMB = {name, audio: a, vol: vol == null ? 0.5 : vol};
+  const p = a.play(); if (p && p.catch) p.catch(() => {});
+  let v = 0;
+  const iv = setInterval(() => { if (AMB.audio !== a) { clearInterval(iv); return; } v = Math.min(AMB.vol, v + 0.05); try { a.volume = v; } catch (e) {} if (v >= AMB.vol) clearInterval(iv); }, 120);
+}
+function ambStop() { if (AMB.audio) { try { AMB.audio.pause(); } catch (e) {} } AMB = {name: null, audio: null, vol: 0.5}; }
+function ambDuck(on) { if (AMB.audio) { try { AMB.audio.volume = on ? AMB.vol * 0.3 : AMB.vol; } catch (e) {} } }
+let ALARM_ON = false;
+function alarm(on) {
+  if (on === ALARM_ON) return; ALARM_ON = on;
+  if (on) {
+    if (!_sfx.alarm) { const a = new Audio('sfx/alarm.mp3'); a.loop = true; a.preload = 'auto'; _sfx.alarm = a; }
+    if (!SETTINGS.muted) { try { _sfx.alarm.volume = 0.3; _sfx.alarm.currentTime = 0; const p = _sfx.alarm.play(); if (p && p.catch) p.catch(() => {}); } catch (e) {} }
+  } else if (_sfx.alarm) { try { _sfx.alarm.pause(); } catch (e) {} }
 }
 
 /* =============== typewriter =============== */
@@ -113,7 +147,7 @@ function lineById(id) { return DATA.lines[id] || {id, text: ''}; }
 const SCREENS = ['scr-auth', 'scr-home', 'scr-play', 'scr-free', 'scr-board', 'scr-card', 'scr-library'];
 function show(id) {
   SCREENS.forEach(s => el(s).classList.toggle('hidden', s !== id));
-  stopHeartbeat();
+  stopHeartbeat(); ambStop(); alarm(false);
   window.scrollTo(0, 0);
 }
 
@@ -187,6 +221,8 @@ async function makeVolunteerRow(user, profile) {
   await enterGame();
 }
 async function routeAfterLogin(user) {
+  INTRO_DEAD = true; stopLineAudio();
+  const gate0 = el('btnStartIntro'); if (gate0) gate0.remove();
   const had = await loadProgress(user.id);
   if (had && ME.type) { await enterGame(); return; }
   let profile = null;
@@ -326,7 +362,7 @@ function renderHome() {
   el('freeNote').textContent = free ? 'مواقف سريعة من بنك التدريب' : 'بيتفتح بعد الموسم الأول';
 }
 function wireHome() {
-  el('btnMute').onclick = () => { SETTINGS.muted = !SETTINGS.muted; saveSettings(); if (SETTINGS.muted) stopHeartbeat(); el('btnMute').textContent = SETTINGS.muted ? '🔇' : '🔊'; };
+  el('btnMute').onclick = () => { SETTINGS.muted = !SETTINGS.muted; saveSettings(); if (SETTINGS.muted) { stopHeartbeat(); ambStop(); alarm(false); stopLineAudio(); } el('btnMute').textContent = SETTINGS.muted ? '🔇' : '🔊'; };
   document.querySelectorAll('#diffRow button').forEach(b => b.onclick = () => {
     SETTINGS.difficulty = b.dataset.diff; saveSettings(); snd('click');
     document.querySelectorAll('#diffRow button').forEach(x => x.classList.toggle('on', x === b));
@@ -379,6 +415,10 @@ function startEpisode(season, ep) {
   show('scr-play');
   const rv = el('bgRain');
   if (rv) { const on = season.num === 2; rv.hidden = !on; if (on) { const pr = rv.play(); if (pr && pr.catch) pr.catch(() => {}); } else { rv.pause(); } }
+  // ambience: season 2 is the flood — rain, or rushing water in rescue episodes; season 1 is the windy coast
+  if (season.num === 2) { amb(EP.vitalsKind === 'life' ? 'flood' : 'rain', 0.5); setTimeout(() => sfx('thunder', 0.45), 1500); }
+  else amb('wind', 0.38);
+  if (ep.id === 's1e3') setTimeout(() => sfx('siren', 0.45), 700);
   renderMeters();
   const body = el('playBody'); body.innerHTML = '';
   const introLines = [];
@@ -416,7 +456,7 @@ function startEpisode(season, ep) {
   }
   el('btnQuitEp').onclick = () => { stopEpTimer(); const r2 = el('bgRain'); if (r2) { r2.pause(); r2.hidden = true; } renderHome(); show('scr-home'); };
 }
-function stopEpTimer() { if (EP && EP.timer) { clearInterval(EP.timer); EP.timer = null; } stopHeartbeat(); stopLineAudio(); }
+function stopEpTimer() { if (EP && EP.timer) { clearInterval(EP.timer); EP.timer = null; } stopHeartbeat(); stopLineAudio(); alarm(false); }
 
 /* =============== casualty vitals (live state the player can see) =============== */
 const VITALS_KIND = { s1e3: 'life', s1e4: 'life', s1e5: 'life', s2e3: 'life', s2e4: 'life', s2e5: 'psych' };
@@ -452,6 +492,7 @@ function renderDecision() {
   const fig = document.createElement('div'); fig.className = 'scene-fig';
   fig.innerHTML = `<img src="assets/scenes/${ep.id}-d${EP.idx + 1}.webp" alt="">`;
   body.appendChild(fig);
+  if (EP.season.num === 2 && Math.random() < 0.3) setTimeout(() => sfx('thunder', 0.35), 900);
   if (EP.idx === 0 && ep.scene) { const sc = document.createElement('div'); sc.className = 'scene-txt'; sc.textContent = ep.scene; body.appendChild(sc); }
   const q = document.createElement('div'); q.className = 'dec-prompt';
   q.textContent = `قرار ${AR(EP.idx + 1)} من ${AR(ep.decisions.length)}: ${d.prompt}`;
@@ -494,6 +535,7 @@ function renderDecision() {
       if (EP.vitals != null) {
         EP.vitals = Math.max(0, EP.vitals - (SETTINGS.difficulty === 'nightmare' ? 0.16 : 0.09));
         updateVitals();
+        alarm(EP.vitals < 30 && EP.vitals > 0);
         if (EP.vitals <= 0) { stopEpTimer(); snd('flatline'); chooseOption(-1, null, optsWrap); return; }
       }
       const frac = EP.remain / (diff.secs * 10);
@@ -530,6 +572,8 @@ function chooseOption(chosen, btn, optsWrap) {
     EP.wrongs++;
     EP.meters[d.meter] = Math.max(0, EP.meters[d.meter] - 34);
     if (!timedOut) snd('wrong');
+    if (EP.vitalsKind === 'life') { if (!timedOut) { sfx(Math.random() < 0.6 ? 'scream' : 'gasp', 0.85); sfx('impact', 0.45); } else sfx('gasp', 0.6); }
+    else if (EP.vitalsKind === 'psych' && !timedOut) sfx('gasp', 0.7);
     renderMeters();
   }
   let vitalsDead = false;
@@ -538,6 +582,7 @@ function chooseOption(chosen, btn, optsWrap) {
     updateVitals();
     vitalsDead = EP.vitals <= 0;
   }
+  if (vitalsDead) { alarm(false); snd('flatline'); }
   const fb = el('epFeedback');
   const line = timedOut ? pick([lineById('H-040'), lineById('H-041')]) : (correct ? d.okLine : d.badLine);
   const fbAud = setBubble(fb, line, correct ? 'haneen-proud.webp' : 'haneen-serious.webp');
@@ -570,7 +615,7 @@ function chooseOption(chosen, btn, optsWrap) {
 }
 async function finishEpisode(failed) {
   const rvF = el('bgRain'); if (rvF) { rvF.pause(); rvF.hidden = true; }
-  stopEpTimer();
+  stopEpTimer(); ambStop(); alarm(false);
   const ep = EP.ep;
   const body = el('playBody'); body.innerHTML = '';
   const wrap = document.createElement('div'); body.appendChild(wrap);
@@ -637,7 +682,7 @@ async function finishEpisode(failed) {
   const done = document.createElement('button'); done.className = 'btn btn-red'; done.textContent = nx ? 'كمّل الرحلة' : 'رجوع للرحلة';
   done.onclick = () => { renderHome(); show('scr-home'); };
   body.appendChild(done);
-  snd('success');
+  snd('success'); if (stars >= 2) sfx('cheer', 0.45);
 }
 function renderMetersInto(parent) {
   const m = document.createElement('div'); m.className = 'meters'; m.style.marginTop = '14px';
@@ -711,7 +756,7 @@ function renderFreeQ() {
       [...wrap.children].forEach(x => { x.disabled = true; if (x !== b) x.classList.add('dim'); });
       b.classList.add(o.ok ? 'picked-ok' : 'picked-bad');
       if (o.ok) { FREE.gained += 3; FREE.correctCount++; snd('correct'); }
-      else { snd('wrong'); [...wrap.children].forEach(x => { if (x.textContent === rendered.find(r => r.ok).t) x.classList.add('picked-ok'); }); }
+      else { snd('wrong'); if (s.cat === 'aid') sfx('impact', 0.4); [...wrap.children].forEach(x => { if (x.textContent === rendered.find(r => r.ok).t) x.classList.add('picked-ok'); }); }
       freeFeedback(s, o.ok, fb);
     };
     wrap.appendChild(b);
@@ -907,6 +952,7 @@ async function drawCard() {
 }
 
 /* =============== boot =============== */
+let INTRO_DEAD = false;
 async function boot() {
   wireAuth(); wireHome();
   try {
@@ -920,12 +966,12 @@ async function boot() {
     el('introTxt').textContent = 'محتاج اتصال بالإنترنت أول مرة عشان أحمل اللعبة.';
     return;
   }
-  // intro typewriter: H-001..H-007
+  // intro typewriter: H-001..H-007 — starts ONLY from the start gate (browsers block autoplay audio)
   const seq = ['H-001', 'H-002', 'H-003', 'H-004', 'H-005', 'H-006', 'H-007'].map(lineById);
   let i = 0;
   const node = el('introTxt');
   const stepIntro = () => {
-    if (i >= seq.length) return;
+    if (INTRO_DEAD || i >= seq.length) return;
     const line = seq[i]; i++;
     const aud = typewrite(node, line.text, line.id);
     const wait = Math.max(2600, line.text.length * 46);
@@ -937,7 +983,9 @@ async function boot() {
     aud.onloadedmetadata = () => { clearTimeout(fb); fb = setTimeout(adv, (aud.duration || 0) * 1000 + 2500); };
     aud.addEventListener('playfailed', () => { clearTimeout(fb); fb = setTimeout(adv, wait); });
   };
-  stepIntro();
+  const gate = el('btnStartIntro');
+  if (gate) gate.onclick = () => { gate.remove(); snd('click'); stepIntro(); };
+  else stepIntro();
   // existing session?
   try {
     const sess = (await sb.auth.getSession()).data.session;
