@@ -7,7 +7,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 /* lines that will have recorded voice files (audio/H-xxx.mp3) — all other lines are text-only */
-const RECORDED = new Set(['H-001','H-002','H-003','H-004','H-005','H-006','H-007','H-010','H-011','H-012','H-013','H-014','H-015','H-020','H-021','H-022','H-023','H-024','H-030','H-031','H-032','H-033','H-034','H-040','H-041','H-055','H-056','H-058','H-059','H-060','H-061','H-062','H-063','H-064','H-090']);
+const RECORDED = new Set(['H-001','H-002','H-003','H-004','H-005','H-006','H-007','H-010','H-011','H-012','H-013','H-014','H-015','H-020','H-021','H-022','H-023','H-024','H-030','H-031','H-032','H-033','H-034','H-040','H-041','H-045','H-046','H-047','H-050','H-051','H-055','H-056','H-057','H-058','H-059','H-060','H-061','H-062','H-063','H-064','H-070','H-071','H-072','H-075','H-080','H-090','H-100','H-101','H-102','H-110','H-111','H-112','H-113','H-114','H-115','H-116','H-120','H-121','H-122','H-123','H-124','H-125','H-130','H-131','H-132','H-133','H-134','H-135','H-140','H-141','H-142','H-143','H-144','H-145','H-150','H-151','H-152','H-153','H-154','H-155','H-160','H-161','H-162','H-163','H-164','H-165','H-170','H-171','H-172','H-173','H-174','H-180','H-181','H-200','H-201','H-210','H-211','H-212','H-213','H-214','H-215','H-220','H-221','H-222','H-223','H-224','H-225','H-230','H-231','H-232','H-233','H-234','H-235','H-236','H-240','H-241','H-242','H-243','H-244','H-245','H-260','H-261','H-262','H-263','H-264','H-265','H-270','H-271','H-290','H-291','H-292','H-293','H-294','H-295','H-296','H-297']);
 const METERS = {cas:'سلامة المصابين', trust:'ثقة المجتمع', team:'سلامة الفريق', prin:'الالتزام بالمبادئ'};
 const DIFFS = {calm:{label:'هادئ', secs:0}, pressure:{label:'ضغط', secs:15}, nightmare:{label:'كابوس', secs:8}};
 const VISITOR_DOMAIN = 'code7.ercsinai.app';
@@ -366,6 +366,11 @@ function renderMeters() {
 function startEpisode(season, ep) {
   EP = {season, ep, idx: 0, meters: {cas: 100, trust: 100, team: 100, prin: 100},
         wrongs: 0, points: 0, correctCount: 0, hintUsed: false, failed: false, timer: null, remain: 0};
+  EP.vitalsKind = VITALS_KIND[ep.id] || null;
+  EP.vitals = EP.vitalsKind ? 100 : null;
+  el('vitalsLabel').textContent = EP.vitalsKind === 'psych' ? 'الحالة النفسية للمصاب' : 'حالة المصاب';
+  el('vitalsPanel').classList.toggle('psych', EP.vitalsKind === 'psych');
+  updateVitals();
   el('playTitle').textContent = `الموسم ${AR(season.num)} — الحلقة ${AR(ep.num)}`;
   show('scr-play');
   const rv = el('bgRain');
@@ -406,6 +411,29 @@ function startEpisode(season, ep) {
   el('btnQuitEp').onclick = () => { stopEpTimer(); const r2 = el('bgRain'); if (r2) { r2.pause(); r2.hidden = true; } renderHome(); show('scr-home'); };
 }
 function stopEpTimer() { if (EP && EP.timer) { clearInterval(EP.timer); EP.timer = null; } stopHeartbeat(); stopLineAudio(); }
+
+/* =============== casualty vitals (live state the player can see) =============== */
+const VITALS_KIND = { s1e3: 'life', s1e4: 'life', s1e5: 'life', s2e3: 'life', s2e4: 'life', s2e5: 'psych' };
+function updateVitals() {
+  const p = el('vitalsPanel'); if (!p) return;
+  if (!EP || EP.vitals == null) { p.classList.add('hidden'); return; }
+  p.classList.remove('hidden');
+  const v = Math.max(0, Math.round(EP.vitals));
+  const fill = el('vitalsFill');
+  fill.style.width = v + '%';
+  fill.style.background = v >= 55 ? 'var(--ok)' : v >= 30 ? '#f5a623' : 'var(--bad)';
+  p.classList.toggle('crit', v < 30);
+  const meta = el('vitalsMeta');
+  if (EP.vitalsKind === 'psych') {
+    meta.textContent = 'التوتر: ' + (v >= 55 ? 'منخفض' : v >= 30 ? 'متوسط' : 'عالٍ جدًا');
+  } else {
+    const bpm = v >= 55 ? Math.round(72 + (100 - v) * 0.5) : Math.round(40 + v * 0.6);
+    meta.textContent = bpm + ' نبضة/دقيقة';
+    const ecg = el('vitalsEcg');
+    ecg.style.animationDuration = v >= 55 ? '1s' : v >= 30 ? '0.6s' : '0.38s';
+    ecg.style.stroke = v >= 55 ? '#2ecc71' : v >= 30 ? '#f5a623' : '#e63946';
+  }
+}
 
 function renderDecision() {
   const ep = EP.ep, d = ep.decisions[EP.idx];
@@ -453,6 +481,11 @@ function renderDecision() {
     heartbeat('normal');
     EP.timer = setInterval(() => {
       EP.remain--;
+      if (EP.vitals != null) {
+        EP.vitals = Math.max(0, EP.vitals - (SETTINGS.difficulty === 'nightmare' ? 0.16 : 0.09));
+        updateVitals();
+        if (EP.vitals <= 0) { stopEpTimer(); snd('flatline'); chooseOption(-1, null, optsWrap); return; }
+      }
       const frac = EP.remain / (diff.secs * 10);
       if (timerFill) { timerFill.style.width = (frac * 100) + '%'; timerFill.style.background = frac < 0.25 ? 'var(--bad)' : 'var(--red)'; }
       if (timerNum) timerNum.textContent = Math.ceil(EP.remain / 10) + 's';
@@ -489,6 +522,12 @@ function chooseOption(chosen, btn, optsWrap) {
     if (!timedOut) snd('wrong');
     renderMeters();
   }
+  let vitalsDead = false;
+  if (EP.vitals != null) {
+    EP.vitals = Math.max(0, Math.min(100, EP.vitals + (correct ? 6 : -16)));
+    updateVitals();
+    vitalsDead = EP.vitals <= 0;
+  }
   const fb = el('epFeedback');
   const line = timedOut ? pick([lineById('H-040'), lineById('H-041')]) : (correct ? d.okLine : d.badLine);
   setBubble(fb, line, correct ? 'haneen-proud.webp' : 'haneen-serious.webp');
@@ -496,16 +535,17 @@ function chooseOption(chosen, btn, optsWrap) {
   info.style.cssText = 'font-weight:800; margin:10px 2px 0';
   info.textContent = correct ? `قرار صح ✅ +${AR(gained)} نقطة` : (timedOut ? 'الوقت خلص ⏱ القرار ده راح عليك' : 'قرار غلط ✗ العدادات اتأثرت');
   fb.appendChild(info);
+  if (vitalsDead) info.textContent = EP.vitalsKind === 'psych' ? 'الحالة النفسية انهارت تمامًا… الحلقة انتهت' : 'حالة المصاب وصلت صفر… فقدناه';
   // fail conditions
   const meterDead = Object.values(EP.meters).some(v => v <= 0);
   const nightmareFail = SETTINGS.difficulty === 'nightmare' && EP.wrongs >= 2;
   const next = document.createElement('button');
-  next.className = 'btn ' + ((meterDead || nightmareFail) ? 'btn-dark' : 'btn-red');
+  next.className = 'btn ' + ((meterDead || nightmareFail || vitalsDead) ? 'btn-dark' : 'btn-red');
   const isLast = EP.idx >= EP.ep.decisions.length - 1;
-  next.textContent = (meterDead || nightmareFail) ? 'شوف نتيجة الحلقة' : isLast ? 'خلاصة الحلقة' : 'القرار اللي بعده';
+  next.textContent = (meterDead || nightmareFail || vitalsDead) ? 'شوف نتيجة الحلقة' : isLast ? 'خلاصة الحلقة' : 'القرار اللي بعده';
   next.onclick = () => {
     snd('click');
-    if (meterDead || nightmareFail) return finishEpisode(true);
+    if (meterDead || nightmareFail || vitalsDead) return finishEpisode(true);
     if (isLast) return finishEpisode(false);
     EP.idx++; renderDecision();
   };

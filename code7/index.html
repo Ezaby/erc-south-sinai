@@ -107,7 +107,7 @@ input,select{font-family:inherit}
 .timer-fill{height:100%; background:var(--red); width:100%; border-radius:99px}
 .timer-num{text-align:left; font-size:12.5px; color:var(--muted); font-weight:700; direction:ltr}
 #bgRain{position:fixed; inset:0; width:100%; height:100%; object-fit:cover; z-index:0; opacity:.5; pointer-events:none}
-  #scr-play .topbar, #scr-play .meters, #scr-play #playBody{position:relative; z-index:1}
+  #scr-play .topbar, #scr-play .meters, #scr-play #playBody, #scr-play .vitals{position:relative; z-index:1}
   .scene-txt{font-size:16.5px; line-height:2; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px 16px; margin-top:12px}
 .dec-prompt{font-size:18px; font-weight:800; line-height:1.9; margin:16px 2px 4px}
 .opt{display:block; width:100%; text-align:right; background:var(--card); border:1.5px solid var(--line); border-radius:14px; padding:15px 14px; font-size:16px; line-height:1.8; margin-top:9px; font-weight:700}
@@ -136,6 +136,18 @@ table.lb tr.me td{font-weight:800; color:var(--red)}
 canvas#cardCanvas{width:100%; border-radius:14px; border:1px solid var(--line)}
 .order-chip{display:inline-block; background:#26262c; border-radius:10px; padding:8px 12px; margin:0 0 8px 8px; font-size:14px; font-weight:700}
 .order-chip.done{background:var(--ok); color:#fff}
+  .vitals{margin:10px 0 4px;background:rgba(10,10,14,.75);border:1.5px solid #2a2a33;border-radius:14px;padding:10px 12px}
+  .vitals.hidden{display:none}
+  .v-head{display:flex;justify-content:space-between;align-items:center;font-weight:900;font-size:.92rem}
+  .v-bpm{color:#9a9aa5;font-size:.82rem;font-weight:700}
+  .v-ecg{width:100%;height:26px;display:block;margin:4px 0}
+  .v-ecg path{fill:none;stroke:#2ecc71;stroke-width:2;stroke-dasharray:26 74;animation:ecgMove 1s linear infinite}
+  @keyframes ecgMove{from{stroke-dashoffset:100}to{stroke-dashoffset:0}}
+  .vitals.psych .v-ecg{display:none}
+  .vitals.crit{border-color:var(--bad);animation:vPulse .5s ease-in-out infinite alternate}
+  @keyframes vPulse{from{box-shadow:0 0 0 rgba(230,57,70,0)}to{box-shadow:0 0 18px rgba(230,57,70,.45)}}
+  .v-bar{height:9px;background:#26262e;border-radius:99px;overflow:hidden}
+  #vitalsFill{height:100%;border-radius:99px;transition:width .3s ease,background .3s ease}
 </style>
 </head>
 <body>
@@ -260,6 +272,11 @@ canvas#cardCanvas{width:100%; border-radius:14px; border:1px solid var(--line)}
       <button class="icon-btn" id="btnQuitEp">✕</button>
     </div>
     <div class="meters" id="meters"></div>
+    <div class="vitals hidden" id="vitalsPanel">
+      <div class="v-head"><span id="vitalsLabel">حالة المصاب</span><span class="v-bpm" id="vitalsMeta"></span></div>
+      <svg class="v-ecg" viewBox="0 0 120 24" preserveAspectRatio="none"><path id="vitalsEcg" pathLength="100" d="M0 12h10l3-8 4 16 3-8h14l3-8 4 16 3-8h14l3-8 4 16 3-8h14l3-8 4 16 3-8h16"/></svg>
+      <div class="v-bar"><div id="vitalsFill"></div></div>
+    </div>
     <div id="playBody"></div>
   </section>
 
