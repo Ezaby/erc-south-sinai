@@ -868,7 +868,7 @@ async function drawCard() {
   const cv = el('cardCanvas'), ctx = cv.getContext('2d');
   const W = 1080, H = 1350;
   try { await document.fonts.ready; } catch (e) {}
-  const [logo, han] = await Promise.all([loadImg('assets/logo.png'), loadImg('assets/haneen-full.webp')]);
+  const [logo, han, ez] = await Promise.all([loadImg('assets/logo.png'), loadImg('assets/haneen-full.webp'), loadImg('assets/ez.webp')]);
   // background: black with a deep red glow
   ctx.fillStyle = '#0a0a0c'; ctx.fillRect(0, 0, W, H);
   const glow = ctx.createRadialGradient(W / 2, 300, 60, W / 2, 300, 760);
@@ -894,61 +894,62 @@ async function drawCard() {
   ctx.beginPath(); ctx.moveTo(W / 2 - 190, 448); ctx.lineTo(W / 2 + 190, 448); ctx.stroke();
   ctx.fillStyle = '#e8112d'; ctx.font = '30px Almarai, sans-serif';
   ctx.fillText('◆', W / 2, 460);
-  // Haneen avatar — framed portrait with gold ring, right side; player block on the left
-  const ax = 618, ay = 512, aw = 330, ah = 420;
-  if (han) {
+  // portraits row — Haneen (right) and Ez (left) flanking, player block centered below
+  const PW = 300, PH = 300, PY = 478;
+  const portrait = (img, x, label) => {
+    if (!img) return;
     ctx.save();
     ctx.beginPath();
-    if (ctx.roundRect) ctx.roundRect(ax, ay, aw, ah, 26); else ctx.rect(ax, ay, aw, ah);
+    if (ctx.roundRect) ctx.roundRect(x, PY, PW, PH, 26); else ctx.rect(x, PY, PW, PH);
     ctx.clip();
-    const scale = Math.max(aw / han.width, ah / han.height);
-    const dw = han.width * scale, dh = han.height * scale;
-    ctx.drawImage(han, ax + (aw - dw) / 2, ay, dw, dh);
+    const sc = Math.max(PW / img.width, PH / img.height);
+    const dw = img.width * sc, dh = img.height * sc;
+    ctx.drawImage(img, x + (PW - dw) / 2, PY, dw, dh);
     ctx.restore();
     ctx.beginPath();
-    if (ctx.roundRect) ctx.roundRect(ax, ay, aw, ah, 26); else ctx.rect(ax, ay, aw, ah);
+    if (ctx.roundRect) ctx.roundRect(x, PY, PW, PH, 26); else ctx.rect(x, PY, PW, PH);
     ctx.lineWidth = 5; ctx.strokeStyle = '#e8112d'; ctx.stroke();
-    // name plate under her photo
     ctx.fillStyle = '#e8112d';
     ctx.beginPath();
-    if (ctx.roundRect) ctx.roundRect(ax, ay + ah - 58, aw, 58, [0, 0, 26, 26]); else ctx.rect(ax, ay + ah - 58, aw, 58);
+    if (ctx.roundRect) ctx.roundRect(x, PY + PH - 52, PW, 52, [0, 0, 26, 26]); else ctx.rect(x, PY + PH - 52, PW, 52);
     ctx.fill();
-    ctx.fillStyle = '#ffffff'; ctx.font = '800 32px Almarai, sans-serif';
-    ctx.fillText('القائدة حنين', ax + aw / 2, ay + ah - 18);
-  }
-  // player block (left of Haneen)
-  const cx = 316;
-  ctx.fillStyle = 'rgba(255,255,255,.82)'; ctx.font = '700 34px Almarai, sans-serif';
-  ctx.fillText(ME.type === 'volunteer' ? 'متطوع الهلال الأحمر' : 'زائر', cx, 566);
-  ctx.fillStyle = '#ffffff'; ctx.font = '800 66px Almarai, sans-serif';
+    ctx.fillStyle = '#ffffff'; ctx.font = '800 30px Almarai, sans-serif';
+    ctx.fillText(label, x + PW / 2, PY + PH - 16);
+  };
+  portrait(han, 630, 'القائدة حنين');
+  portrait(ez, 150, 'Ez');
+  // player block (centered, below the portraits)
+  ctx.fillStyle = 'rgba(255,255,255,.82)'; ctx.font = '700 32px Almarai, sans-serif';
+  ctx.fillText(ME.type === 'volunteer' ? 'متطوع الهلال الأحمر' : 'زائر', W / 2, 836);
+  ctx.fillStyle = '#ffffff'; ctx.font = '800 60px Almarai, sans-serif';
   const nm = ME.name || '';
-  ctx.fillText(nm.length > 18 ? nm.slice(0, 18) + '…' : nm, cx, 648);
+  ctx.fillText(nm.length > 18 ? nm.slice(0, 18) + '…' : nm, W / 2, 904);
   // rank pill
   const rankTxt = 'الرتبة: ' + rankFor(totalPoints());
-  ctx.font = '800 36px Almarai, sans-serif';
-  const rw = ctx.measureText(rankTxt).width + 64;
+  ctx.font = '800 34px Almarai, sans-serif';
+  const rw = ctx.measureText(rankTxt).width + 60;
   ctx.beginPath();
-  if (ctx.roundRect) ctx.roundRect(cx - rw / 2, 692, rw, 66, 33); else ctx.rect(cx - rw / 2, 692, rw, 66);
+  if (ctx.roundRect) ctx.roundRect(W / 2 - rw / 2, 932, rw, 60, 30); else ctx.rect(W / 2 - rw / 2, 932, rw, 60);
   ctx.strokeStyle = '#ff2b3f'; ctx.lineWidth = 2.5; ctx.stroke();
-  ctx.fillStyle = '#ff2b3f'; ctx.fillText(rankTxt, cx, 738);
-  // points
-  ctx.fillStyle = '#ffffff'; ctx.font = '800 128px Almarai, sans-serif';
-  ctx.fillText(AR(totalPoints()), cx, 906);
-  ctx.fillStyle = '#ff2b3f'; ctx.font = '700 36px Almarai, sans-serif';
-  ctx.fillText('نقطة', cx, 962);
+  ctx.fillStyle = '#ff2b3f'; ctx.fillText(rankTxt, W / 2, 976);
+  // points — number with its label on the same line
+  ctx.fillStyle = '#ffffff'; ctx.font = '800 104px Almarai, sans-serif';
+  const pts = AR(totalPoints());
+  const numW = ctx.measureText(pts).width;
+  ctx.fillText(pts, W / 2 - 36, 1102);
+  ctx.fillStyle = '#ff2b3f'; ctx.font = '700 34px Almarai, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('نقطة', W / 2 - 36 + numW / 2 + 16, 1102);
+  ctx.textAlign = 'center';
   // stars line — single elegant row
   const st = totalStars(), max = allEpisodes().length * 3;
-  ctx.fillStyle = '#ffffff'; ctx.font = '700 38px Almarai, sans-serif';
-  ctx.fillText('حاصل على ' + AR(st) + ' نجمة من ' + AR(max), W / 2, 1052);
-  ctx.fillStyle = '#d9a441'; ctx.font = '44px Almarai, sans-serif';
-  ctx.fillText('★', W / 2, 1112);
+  ctx.fillStyle = '#ffffff'; ctx.font = '700 36px Almarai, sans-serif';
+  ctx.fillText('حاصل على ' + AR(st) + ' نجمة من ' + AR(max), W / 2, 1174);
   // footer
   ctx.strokeStyle = 'rgba(232,17,45,.5)'; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(W / 2 - 300, 1168); ctx.lineTo(W / 2 + 300, 1168); ctx.stroke();
-  ctx.fillStyle = '#ffffff'; ctx.font = '700 37px Almarai, sans-serif';
-  ctx.fillText('الهلال الأحمر المصري — فرع جنوب سيناء', W / 2, 1232);
-  ctx.fillStyle = 'rgba(255,255,255,.72)'; ctx.font = '400 31px Almarai, sans-serif';
-  ctx.fillText(new Date().toLocaleDateString('ar-EG'), W / 2, 1286);
+  ctx.beginPath(); ctx.moveTo(W / 2 - 300, 1220); ctx.lineTo(W / 2 + 300, 1220); ctx.stroke();
+  ctx.fillStyle = '#ffffff'; ctx.font = '700 34px Almarai, sans-serif';
+  ctx.fillText('الهلال الأحمر المصري — فرع جنوب سيناء', W / 2, 1274);
 }
 
 /* =============== boot =============== */
