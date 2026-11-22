@@ -11,8 +11,8 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{
-  --red:#c8102e; --red-dark:#8f0b21; --ink:#1c1e22; --muted:#6b7280;
-  --bg:#f6f4f1; --card:#ffffff; --line:#e7e2dc; --gold:#d9a441;
+  --red:#d80f26; --red-dark:#9e0a1f; --ink:#1c1e22; --muted:#6b7280;
+  --bg:#f8f2ef; --card:#ffffff; --line:#e9ddd6; --gold:#d9a441;
   --ok:#1e9e62; --bad:#d43a2f; --radius:16px;
 }
 *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
@@ -28,10 +28,10 @@ input,select{font-family:inherit}
 @keyframes fade{from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:none}}
 
 /* ---------- start / auth ---------- */
-.hero{text-align:center; padding-top:10px}
-.hero img.logo{width:132px; height:132px; object-fit:contain}
-.hero .slogan{font-size:20px; font-weight:800; color:var(--red); margin:8px 0 2px; line-height:1.7}
-.hero .sub{color:var(--muted); font-size:13.5px; margin:0}
+.hero{text-align:center; background:linear-gradient(165deg,#ec1233 0%,var(--red) 52%,var(--red-dark) 100%); margin:-18px -16px 0; padding:28px 16px 24px; border-radius:0 0 28px 28px; box-shadow:0 12px 26px rgba(216,15,38,.28)}
+.hero img.logo{width:132px; height:132px; object-fit:contain; background:#fff; border-radius:50%; padding:9px; box-shadow:0 8px 20px rgba(0,0,0,.22)}
+.hero .slogan{font-size:21px; font-weight:800; color:#fff; margin:12px 0 3px; line-height:1.7; text-shadow:0 2px 8px rgba(0,0,0,.18)}
+.hero .sub{color:rgba(255,255,255,.88); font-size:13.5px; margin:0}
 .haneen-row{display:flex; gap:12px; align-items:flex-end; margin:18px 0 6px}
 .haneen-row img{width:96px; height:126px; object-fit:cover; object-position:top center; border-radius:14px; border:2px solid var(--line); box-shadow:0 4px 14px rgba(0,0,0,.10); background:#fff; flex:none}
 .haneen-fig{display:flex; flex-direction:column; flex:none; width:96px}
@@ -59,14 +59,14 @@ input,select{font-family:inherit}
 .msg.err{color:var(--bad)} .msg.ok{color:var(--ok)}
 .tabs{display:flex; gap:8px; margin-top:14px}
 .tabs button{flex:1; border:1.5px solid var(--line); background:var(--card); border-radius:12px; padding:11px 6px; font-size:15px; font-weight:700}
-.tabs button.on{background:var(--ink); color:#fff; border-color:var(--ink)}
+.tabs button.on{background:var(--red); color:#fff; border-color:var(--red)}
 .consent{font-size:12.5px; color:var(--muted); line-height:1.9; background:#fbf9f6; border:1px dashed var(--line); border-radius:12px; padding:10px 12px; margin-top:12px}
 .linkish{background:none; border:none; color:var(--red); font-weight:700; font-size:14px; padding:6px}
 
 /* ---------- home / journey ---------- */
-.topbar{display:flex; align-items:center; justify-content:space-between; gap:10px}
+.topbar{display:flex; align-items:center; justify-content:space-between; gap:10px; background:linear-gradient(120deg,var(--red),var(--red-dark)); color:#fff; margin:-18px -16px 0; padding:20px 16px 14px; border-radius:0 0 20px 20px; box-shadow:0 8px 20px rgba(216,15,38,.22)}
 .topbar .brand{display:flex; align-items:center; gap:9px; font-weight:800; font-size:19px}
-.topbar .brand img{width:38px; height:38px; object-fit:contain}
+.topbar .brand img{width:38px; height:38px; object-fit:contain; background:#fff; border-radius:50%; padding:3px}
 .icon-btn{background:var(--card); border:1.5px solid var(--line); border-radius:12px; width:42px; height:42px; font-size:19px; display:inline-flex; align-items:center; justify-content:center}
 .player-card{display:flex; gap:12px; align-items:center}
 .player-card .avatar{width:56px; height:56px; border-radius:50%; background:linear-gradient(145deg,var(--red),var(--red-dark)); color:#fff; display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:800; flex:none}
@@ -80,7 +80,7 @@ input,select{font-family:inherit}
 .diff-row button{flex:1; border:1.5px solid var(--line); background:#fff; border-radius:12px; padding:11px 4px; font-weight:800; font-size:15px}
 .diff-row button.on{border-color:var(--red); color:var(--red); background:#fdf1f3}
 .diff-row small{display:block; font-weight:400; color:var(--muted); font-size:11.5px; margin-top:2px}
-.season-title{display:flex; align-items:center; gap:8px; margin:20px 2px 4px; font-size:18px; font-weight:800}
+.season-title{display:flex; align-items:center; gap:8px; margin:20px 2px 4px; font-size:18px; font-weight:800; border-right:4px solid var(--red); padding-right:9px}
 .season-title .lock-note{font-size:12px; color:var(--muted); font-weight:400}
 .ep{display:flex; align-items:center; gap:12px; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:13px 14px; margin-top:9px; width:100%; text-align:right}
 .ep .n{width:40px; height:40px; border-radius:12px; background:#f3efe9; font-weight:800; display:flex; align-items:center; justify-content:center; font-size:17px; flex:none}
