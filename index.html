@@ -158,6 +158,28 @@
   /* ---------- services ---------- */
   .svc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:16px}
   @media (max-width:420px){.svc-grid{grid-template-columns:1fr}}
+  .feat-story{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:var(--shadow-lg);margin-bottom:30px}
+  .feat-story img{width:100%;height:100%;object-fit:cover;display:block;min-height:280px}
+  .feat-body{padding:24px 26px}
+  .feat-kicker{color:var(--red);font-weight:800;font-size:13.5px}
+  .feat-body h3{margin:8px 0 10px;font-size:clamp(20px,3.4vw,27px);line-height:1.55}
+  .feat-body p{line-height:2;color:var(--ink-2);margin:0 0 10px}
+  .feat-facts{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 16px}
+  .feat-facts span{background:var(--red-soft);color:var(--red-deep);border-radius:99px;padding:4px 12px;font-size:12.5px;font-weight:700}
+  .btn-fb{display:inline-block;background:var(--red);color:#fff;padding:11px 22px;border-radius:12px;font-weight:800;text-decoration:none}
+  @media (max-width:760px){.feat-story{grid-template-columns:1fr}.feat-story img{min-height:220px;max-height:330px}}
+  .hl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;margin-bottom:34px}
+  .hl{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow)}
+  .hl .d{display:inline-block;background:var(--ink);color:var(--bg);border-radius:8px;padding:2px 10px;font-size:12px;font-weight:800;margin-bottom:8px}
+  .hl h4{margin:0 0 6px;font-size:16.5px;line-height:1.6}
+  .hl p{margin:0;color:var(--ink-2);line-height:1.9;font-size:14px}
+  .pillars{display:grid;grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:14px;margin-top:18px}
+  .pillar{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+  .pillar h4{margin:0 0 8px;font-size:16.5px}
+  .pillar p{margin:0 0 12px;color:var(--ink-2);line-height:1.95;font-size:14px}
+  .pillar .st{display:inline-block;font-size:12px;font-weight:800;border-radius:99px;padding:3px 10px;background:var(--chip);color:var(--green);margin-bottom:10px}
+  .pillar .st.soon{color:var(--gold)}
+  .pillar a{display:inline-block;color:var(--red);font-weight:800;text-decoration:none}
   .svc{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);display:flex;flex-direction:column}
   .svc .svc-body{padding:18px;display:flex;flex-direction:column;gap:6px;flex:1}
   .svc .svc-ic{width:46px;height:46px;border-radius:12px;background:var(--red-soft);display:flex;align-items:center;justify-content:center;margin-bottom:6px}
@@ -952,7 +974,18 @@
       <div class="mv"><b>1949 — اتفاقيات جنيف</b><p>أقرّت دول العالم حماية المدنيين والجرحى والأسرى، واعتمدت الشارتين علاماتِ حماية لا يجوز المساس بحامليها.</p></div>
       <div class="mv"><b>اليوم — شبكة عالمية واحدة</b><p>191 جمعية وطنية وملايين المتطوعين يعملون بالمبادئ السبعة نفسها — وفرع جنوب سيناء جزء من هذه الشبكة.</p></div>
     </div>
-  </section>
+    <div class="build-block">
+    <div class="kicker-line" style="margin-top:36px">رؤيتنا للمرحلة الجاية</div>
+    <div class="sec-head"><h2>ماذا نبني في <span class="accent">جنوب سيناء؟</span></h2></div>
+    <p class="sec-sub">الموقع ده مش أرشيف بس — دي أدوات شغل حقيقية بيبنيها الفرع خطوة بخطوة، عشان الإغاثة توصل أسرع، والمتطوع يبقى أجهز:</p>
+    <div class="pillars">
+      <article class="pillar"><h4>🛰️ منظومة إغاثة إلكترونية</h4><p>خريطة طوارئ حية بمواقع فريق الطوارئ والمستشفيات، وتبويب طقس ببيانات محدثة لمدن المحافظة، وأرقام الطوارئ في متناول أي حد — عشان وقت السيول والأزمات المعلومة الصح توصل في ثوانٍ.</p><span class="st">شغالة دلوقتي</span><br><a href="#" onclick="showPage('map');return false;">افتح خريطة الطوارئ ←</a></article>
+      <article class="pillar"><h4>🏛️ حضور يليق بالمحافظة</h4><p>أرشيف موثّق لأكتر من ٢٢٠ نشاطًا للفرع منذ ٢٠٠٥، وحضور على الأرض مع الجامعة والأزهر ومديرية التضامن والجهات التنفيذية — وآخره تكريم المستشار العسكري للمحافظة لمدير الفرع التنفيذي في تدريب «صقر 165».</p><span class="st">شغال وبيكبر</span><br><a href="#" onclick="showPage('work');return false;">شوف أنشطتنا ←</a></article>
+      <article class="pillar"><h4>🤝 باب مفتوح للتطوع</h4><p>حساب لكل متطوع مربوط برقم عضويته، ومقابلات دورية للمتقدمين الجدد. هدفنا إن أي شاب أو شابة في جنوب سيناء يلاقوا طريقهم للفرع بسهولة — ويبقوا جزء من فريق بيخدم بلده.</p><span class="st">شغال — انضم لينا</span><br><a href="#" onclick="showPage('accounts');return false;">اعمل حساب متطوع ←</a></article>
+      <article class="pillar"><h4>🎮 تدريب تفاعلي وتنظيم للعمليات</h4><p>لعبة «CODE 7» بتدرّب المتطوعين على قرارات الطوارئ الحقيقية بمحاكاة تفاعلية وصوت القائدة الميدانية، وحسابات المتطوعين بتتطوّر عشان تسجّل الأنشطة وساعات التطوع وتنظّم شغل الفرق في كل مدن المحافظة.</p><span class="st">اللعبة شغالة</span> <span class="st soon">تسجيل الساعات: قريبًا</span><br><a href="https://erc-south-sinai.vercel.app/code7/" target="_blank" rel="noopener">العب CODE 7 ←</a></article>
+    </div>
+  </div>
+</section>
 
 <section id="principles" class="principles">
     <div class="kicker-line">قيمنا</div>
@@ -1080,6 +1113,31 @@
 
   <div class="page" id="page-work" hidden>
     <div class="wrap">
+<section class="feat-wrap" aria-label="قصة مميزة">
+  <div class="feat-story">
+    <img src="assets/honor-daabs.webp" alt="المدير التنفيذي لفرع الهلال الأحمر بجنوب سيناء عبدالله دعبس بالزي الأحمر يحمل شهادة التقدير أمام مبنى المحافظة">
+    <div class="feat-body">
+      <div class="feat-kicker">⭐ قصة تتصدّر أنشطتنا</div>
+      <h3>المستشار العسكري لمحافظة جنوب سيناء يكرّم المدير التنفيذي لفرعنا</h3>
+      <p>خلال فعاليات معسكر الإيواء العاجل ضمن التدريب العملي المشترك «صقر 165»، كرّم المستشار العسكري لمحافظة جنوب سيناء الأستاذ <b>عبدالله دعبس</b> — المدير التنفيذي لفرع الهلال الأحمر المصري بجنوب سيناء — بشهادة تقدير، تقديرًا لدور الفرع في دعم وتنظيم المعسكر الذي يحاكي استقبال وإيواء المتضررين وقت الكوارث.</p>
+      <p>وأكد المدير التنفيذي أن التكريم يخص فريق الفرع كله — متطوعين وموظفين — لا شخصًا واحدًا، وأن أهم دروس المعسكر: التنسيق المسبق بين الجهات، ووضوح الأدوار، وأن الجاهزية الحقيقية تحتاج تدريبًا مستمرًا لا يتوقف.</p>
+      <div class="feat-facts"><span>٦ أكتوبر ٢٠٢٦</span><span>معسكر الإيواء العاجل</span><span>التدريب المشترك «صقر 165»</span><span>شهادة تقدير من المستشار العسكري للمحافظة</span></div>
+      <a class="btn-fb" href="https://facebook.com/100068758453990/posts/pfbid02BHWKt1ctdUNJsgv6R6otk2oGSTgyPPktHwk1fFE2tdJ26MWY89urZei6PkGjQ6TVl/" target="_blank" rel="noopener">شوف المنشور وصوره على فيسبوك ←</a>
+    </div>
+  </div>
+</section>
+<section class="hl-wrap" aria-label="أحدث الأنشطة">
+    <div class="kicker-line">أحدث الأنشطة</div>
+    <div class="sec-head"><h2>شغل الفرع في <span class="accent">الأسابيع الأخيرة</span></h2></div>
+    <div class="hl-grid">
+      <article class="hl"><span class="d">٢٧ أكتوبر ٢٠٢٦</span><h4>تأمين ماراثون احتفالات نصر أكتوبر</h4><p>فرق الفرع شاركت في تأمين ماراثون الجري احتفالًا بنصر أكتوبر المجيد — أعلى منشورات الشهر تفاعلًا (٥١ تفاعلًا، و١٩ صورة من قلب الحدث).</p></article>
+      <article class="hl"><span class="d">٢٧ أكتوبر – ٢ نوفمبر ٢٠٢٦</span><h4>الأسبوع الأحمر RED WEEK — النسخة الثالثة</h4><p>انطلقت الحملة السنوية بجامعة جنوب سيناء تحت شعار «روح وجسد»، وتواصلت فعالياتها بكلية التربية: تعريف بالهلال الأحمر وأنشطته، وباب مفتوح لانضمام متطوعين جدد.</p></article>
+      <article class="hl"><span class="d">١٧ – ١٨ نوفمبر ٢٠٢٦</span><h4>قوافل تعليمية لمدارس القرى والوديان</h4><p>أنشطة توعوية لطلاب المدارس — منها قرية الشيخ موسى بالطور — في الإسعافات الأولية والتوعية بالتغيرات المناخية والسلوكيات الإيجابية.</p></article>
+      <article class="hl"><span class="d">٦ – ١١ نوفمبر ٢٠٢٦</span><h4>دعم الحملة القومية للتطعيم</h4><p>فرق الفرع دعمت على الأرض الحملة القومية للتطعيم ضد الحصبة والحصبة الألمانية بمحافظة جنوب سيناء.</p></article>
+      <article class="hl"><span class="d">نوفمبر ٢٠٢٦</span><h4>تدريبات تخصصية لرفع كفاءة المتطوعين</h4><p>تدريب تخصصي في الإسعافات الأولية للمتطوعين (٧–٨ نوفمبر)، وتدريب لإعداد كوادر تطوعية مؤهلة ورفع كفاءة فرق الفرع (١٥ نوفمبر).</p></article>
+      <article class="hl"><span class="d">٣ نوفمبر ٢٠٢٦</span><h4>مقابلات المتطوعين الجدد</h4><p>عقد الفرع مقابلات شخصية للمتقدمين الجدد للتطوع، لتوسيع قاعدة المشاركة المجتمعية واستثمار طاقات الشباب — وباب التطوع مفتوح دائمًا.</p></article>
+    </div>
+</section>
 <section id="services">
     <div class="kicker-line">ماذا نفعل</div>
     <div class="sec-head"><h2>شوف شغلنا في <span class="accent">جنوب سيناء</span></h2></div>
@@ -1966,7 +2024,7 @@ var ARCHIVE = [
 {d:"2026-10-20",y:2026,city:"جنوب سيناء — عام",cat:"أنشطة متطوعين وشباب",layer:"page",src:"صفحة نادي شباب الهلال الأحمر",url:"https://www.facebook.com/profile.php?id=100068758453990",t:"فيديو مجمّع لأبرز أنشطة الفرع (Reels) — نسخة ثانية",s:"Reels بالعنوان نفسه «📹 فيديو مجمّع لأبرز أنشطة فرع الهلال الأحمر المصري بجنوب سيناء» (منشور مكرر بفارق دقيقة) — Reels.",react:"تفاعلان"},
 {d:"2026-10-20",y:2026,city:"جنوب سيناء — عام",cat:"أنشطة متطوعين وشباب",layer:"page",src:"صفحة نادي شباب الهلال الأحمر",url:"https://www.facebook.com/profile.php?id=100068758453990",t:"فيديو مجمّع لأبرز أنشطة الفرع",s:"«📹 فيديو مجمّع لأبرز أنشطة فرع الهلال الأحمر المصري بجنوب سيناء» — فيديو (0:59).",react:"19 تفاعلًا · 4 تعليقات · 37 مشاركة"},
 {d:"2026-10-12",y:2026,city:"جنوب سيناء — عام",cat:"تدريب وإسعافات أولية",layer:"page",src:"صفحة نادي شباب الهلال الأحمر",url:"https://www.facebook.com/profile.php?id=100068758453990",t:"ندوة توعوية عن الإسعافات الأولية لأطفال رياض الأطفال",s:"«الهلال الأحمر المصري بجنوب سيناء ينظم ندوة توعوية عن الإسعافات الأولية لأطفال رياض الأطفال بمدرسة...» — 26 صورة.",react:"20 تفاعلًا · 3 تعليقات · مشاركتان"},
-{d:"2026-10-06",y:2026,city:"جنوب سيناء — عام",cat:"استجابة طوارئ وسيول",layer:"page",src:"صفحة نادي شباب الهلال الأحمر",url:"https://www.facebook.com/profile.php?id=100068758453990",t:"تقدير الجهود المبذولة خلال فعاليات معسكر الإيواء العاجل",s:"«في إطار تقدير الجهود المبذولة خلال فعاليات معسكر الإيواء العاجل بمحافظة جنوب سيناء...» — 14 صورة.",react:"38 تفاعلًا · 20 تعليقًا · مشاركتان"},
+{d:"2026-10-06",y:2026,city:"جنوب سيناء — عام",cat:"استجابة طوارئ وسيول",layer:"page",src:"صفحة نادي شباب الهلال الأحمر",url:"https://facebook.com/100068758453990/posts/pfbid02BHWKt1ctdUNJsgv6R6otk2oGSTgyPPktHwk1fFE2tdJ26MWY89urZei6PkGjQ6TVl/",t:"المستشار العسكري لمحافظة جنوب سيناء يكرّم المدير التنفيذي للفرع خلال معسكر الإيواء العاجل",s:"تكريم الأستاذ عبدالله دعبس بشهادة تقدير خلال التدريب العملي المشترك «صقر 165» — 14 صورة.",react:"38 تفاعلًا · 20 تعليقًا · مشاركتان"},
 {d:"2026-10-03",y:2026,city:"الطور / سانت كاترين",cat:"مساعدات وإغاثة",layer:"page",src:"صفحة نادي شباب الهلال الأحمر (مشاركة)",url:"https://www.facebook.com/profile.php?id=100068758453990",t:"مشاركة منشور قافلة جامعة الأزهر التنموية لطور سيناء وسانت كاترين",s:"مشاركة منشور الهلال الأحمر المصري: «الهلال الأحمر المصري يشارك جامعة الأزهر في تنفيذ قافلة تنموية متكاملة لخدمة أهالي طور سيناء وسانت كاترين»؛ ونص الصفحة: «شارك فرع الهلال الأحمر المصري بجنوب سيناء في تنفيذ القافلة التنموية المتكاملة بالتعاون مع جامعة الأزهر» — فيديو (2:41).",react:"8 تفاعلات · تعليق 1 · مشاركة 1"},
 {d:"2026-10-02",y:2026,city:"الطور",cat:"حملات توعية صحية",layer:"page",src:"صفحة نادي شباب الهلال الأحمر",url:"https://www.facebook.com/profile.php?id=100068758453990",t:"مع جامعة الأزهر لنشر التوعية والرعاية الصحية في طور سيناء",s:"«الهلال الأحمر المصري وجامعة الأزهر.. معًا لنشر التوعية والرعاية الصحية في طور سيناء ووديان جنوب سيناء» — 34 صورة.",react:"22 تفاعلًا · 5 تعليقات · 42 مشاركة"},
 {d:"2026-10-02",y:2026,city:"الطور",cat:"استجابة طوارئ وسيول",layer:"page",src:"صفحة نادي شباب الهلال الأحمر",url:"https://www.facebook.com/profile.php?id=100068758453990",t:"تنبيه مهم لأهالي طور سيناء بشأن الأمطار",s:"«🌧️ تنبيه مهم لأهالينا في طور سيناء» — نص فقط بلا صور ظاهرة.",react:"6 تفاعلات"},
