@@ -71,19 +71,18 @@ function lineAudio(lineId) {
 }
 
 /* =============== typewriter =============== */
-let twTimer = null;
 function typewrite(node, text, lineId) {
-  clearInterval(twTimer);
+  if (node._tw) clearInterval(node._tw);
   node.textContent = '';
   lineAudio(lineId);
   let i = 0;
   const full = text || '';
-  twTimer = setInterval(() => {
+  node._tw = setInterval(() => {
     i += 2;
     node.textContent = full.slice(0, i);
-    if (i >= full.length) clearInterval(twTimer);
+    if (i >= full.length) { clearInterval(node._tw); node._tw = null; }
   }, 24);
-  node.onclick = () => { clearInterval(twTimer); node.textContent = full; };
+  node.onclick = () => { if (node._tw) { clearInterval(node._tw); node._tw = null; } node.textContent = full; };
 }
 function bubbleHTML(img, who) {
   return `<div class="haneen-row"><img src="assets/${img || 'haneen-full.webp'}" alt="القائدة حنين">
@@ -363,23 +362,25 @@ function startEpisode(season, ep) {
   const introLines = [];
   if (!P.seen_seasons.includes(season.id)) { introLines.push(...season.introLines); P.seen_seasons.push(season.id); }
   introLines.push(...(ep.introLines || []));
-  let step = 0;
-  const bubbleWrap = document.createElement('div'); body.appendChild(bubbleWrap);
   if (ep.scene) { const sc = document.createElement('div'); sc.className = 'scene-txt'; sc.textContent = ep.scene; body.appendChild(sc); }
-  const btn = document.createElement('button'); btn.className = 'btn btn-red'; btn.textContent = introLines.length ? 'التالي' : 'ابدأ الحلقة';
-  body.appendChild(btn);
-  const showLine = () => {
-    if (step < introLines.length) { setBubble(bubbleWrap, introLines[step], 'haneen-focus.webp'); btn.textContent = step === introLines.length - 1 ? 'ابدأ الحلقة' : 'التالي'; }
-    else if (introLines.length === 0) { bubbleWrap.innerHTML = ''; }
-  };
-  showLine();
-  btn.onclick = () => {
-    snd('click');
-    if (step < introLines.length - 1) { step++; showLine(); }
-    else if (step === introLines.length - 1 && introLines.length) { step++; bubbleWrap.innerHTML = ''; btn.remove(); renderDecision(); }
-    else { btn.remove(); renderDecision(); }
-  };
-  if (!introLines.length) { /* scene + start button only */ }
+  const btn = document.createElement('button'); btn.className = 'btn btn-red'; btn.textContent = 'ابدأ الحلقة';
+  btn.onclick = () => { snd('click'); btn.remove(); renderDecision(); };
+  if (introLines.length) {
+    // play Haneen's intro lines as stacked chat bubbles, one after another
+    let step = 0;
+    const playNext = () => {
+      if (step >= introLines.length || !document.body.contains(btn)) return;
+      const w = document.createElement('div'); body.insertBefore(w, btn);
+      setBubble(w, introLines[step], 'haneen-focus.webp');
+      const wait = Math.max(2400, introLines[step].text.length * 46);
+      step++;
+      setTimeout(playNext, wait);
+    };
+    body.appendChild(btn);
+    playNext();
+  } else {
+    body.appendChild(btn);
+  }
   el('btnQuitEp').onclick = () => { stopEpTimer(); renderHome(); show('scr-home'); };
 }
 function stopEpTimer() { if (EP && EP.timer) { clearInterval(EP.timer); EP.timer = null; } stopHeartbeat(); }
