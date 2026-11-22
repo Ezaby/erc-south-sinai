@@ -715,7 +715,7 @@ async function loadBoard(tab) {
     <td style="width:38px">${medals[i] || AR(i + 1)}</td>
     <td>${r.masked_name} <span class="badge ${r.player_type === 'volunteer' ? 'vol' : ''}">${r.player_type === 'volunteer' ? 'متطوع' : 'زائر'}</span></td>
     <td style="text-align:left; direction:ltr; font-weight:800">${AR(r.total_points)}</td></tr>`).join('')}</table>
-    <p style="color:var(--muted); font-size:12.5px; line-height:1.9">اللوحة بتعرض الاسم الأول وحرف من الاسم الأخير بس، من غير أي بيانات خاصة.</p>`;
+    <p style="color:var(--muted); font-size:12.5px; line-height:1.9">اللوحة بتعرض الاسم وعدد النقاط بس، من غير أي بيانات خاصة.</p>`;
 }
 
 /* =============== library =============== */
@@ -735,37 +735,91 @@ function renderLibrary() {
 }
 
 /* =============== result card =============== */
-function drawCard() {
+function loadImg(src) { return new Promise(res => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = src; }); }
+async function drawCard() {
   const cv = el('cardCanvas'), ctx = cv.getContext('2d');
   const W = 1080, H = 1350;
-  const grad = ctx.createLinearGradient(0, 0, 0, H);
-  grad.addColorStop(0, '#2a050c'); grad.addColorStop(0.55, '#7d0a20'); grad.addColorStop(1, '#4a0714');
+  try { await document.fonts.ready; } catch (e) {}
+  const [logo, han] = await Promise.all([loadImg('assets/logo.png'), loadImg('assets/haneen-full.webp')]);
+  // background: rich red gradient + soft radial glow
+  const grad = ctx.createLinearGradient(0, 0, W, H);
+  grad.addColorStop(0, '#b30d27'); grad.addColorStop(0.55, '#8f0a20'); grad.addColorStop(1, '#5f0715');
   ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
-  ctx.strokeStyle = 'rgba(217,164,65,.85)'; ctx.lineWidth = 10; ctx.strokeRect(28, 28, W - 56, H - 56);
-  const logo = new Image();
-  logo.onload = () => {
-    ctx.drawImage(logo, W / 2 - 130, 84, 260, 260);
-    ctx.textAlign = 'center'; ctx.fillStyle = '#fff';
-    ctx.font = '800 92px Almarai, sans-serif'; ctx.fillText('CODE 7', W / 2, 452);
-    ctx.font = '700 40px Almarai, sans-serif'; ctx.fillStyle = '#f3d9a4';
-    ctx.fillText('الهلال الأحمر المصري — فرع جنوب سيناء', W / 2, 522);
-    ctx.font = '800 74px Almarai, sans-serif'; ctx.fillStyle = '#fff';
-    ctx.fillText(ME.name || '', W / 2, 668);
-    ctx.font = '700 44px Almarai, sans-serif'; ctx.fillStyle = '#ffd98a';
-    ctx.fillText((ME.type === 'volunteer' ? 'متطوع' : 'زائر') + ' · ' + rankFor(totalPoints()), W / 2, 748);
-    ctx.font = '800 120px Almarai, sans-serif';
-    ctx.fillText(AR(totalPoints()), W / 2, 920);
-    ctx.font = '700 40px Almarai, sans-serif'; ctx.fillStyle = '#f3d9a4';
-    ctx.fillText('نقطة', W / 2, 982);
-    ctx.font = '64px Almarai, sans-serif'; ctx.fillStyle = '#d9a441';
-    const st = totalStars(), max = allEpisodes().length * 3;
-    ctx.fillText('★'.repeat(Math.min(st, 18)) + (st > 18 ? '+' : ''), W / 2, 1080);
-    ctx.font = '700 36px Almarai, sans-serif'; ctx.fillStyle = '#fff';
-    ctx.fillText(AR(st) + ' نجمة من ' + AR(max), W / 2, 1140);
-    ctx.font = '400 32px Almarai, sans-serif'; ctx.fillStyle = 'rgba(255,255,255,.75)';
-    ctx.fillText(new Date().toLocaleDateString('ar-EG'), W / 2, 1252);
-  };
-  logo.src = 'assets/logo.png';
+  const glow = ctx.createRadialGradient(W / 2, 330, 60, W / 2, 330, 620);
+  glow.addColorStop(0, 'rgba(255,255,255,.14)'); glow.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H);
+  // double gold frame
+  ctx.strokeStyle = 'rgba(217,164,65,.95)'; ctx.lineWidth = 6; ctx.strokeRect(34, 34, W - 68, H - 68);
+  ctx.strokeStyle = 'rgba(217,164,65,.45)'; ctx.lineWidth = 2; ctx.strokeRect(56, 56, W - 112, H - 112);
+  ctx.textAlign = 'center';
+  // logo in a white medallion
+  ctx.beginPath(); ctx.arc(W / 2, 218, 108, 0, Math.PI * 2);
+  ctx.fillStyle = '#ffffff'; ctx.fill();
+  ctx.lineWidth = 5; ctx.strokeStyle = '#d9a441'; ctx.stroke();
+  if (logo) { ctx.save(); ctx.beginPath(); ctx.arc(W / 2, 218, 100, 0, Math.PI * 2); ctx.clip(); ctx.drawImage(logo, W / 2 - 100, 118, 200, 200); ctx.restore(); }
+  // slogan
+  ctx.fillStyle = '#f6d488'; ctx.font = '800 41px Almarai, sans-serif';
+  ctx.fillText('كل ثانية بتفرق… وكل قرار صح معناه نبضة بتكمل', W / 2, 402);
+  // divider
+  ctx.strokeStyle = 'rgba(246,212,136,.7)'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(W / 2 - 190, 448); ctx.lineTo(W / 2 + 190, 448); ctx.stroke();
+  ctx.fillStyle = '#d9a441'; ctx.font = '30px Almarai, sans-serif';
+  ctx.fillText('◆', W / 2, 460);
+  // Haneen avatar — framed portrait with gold ring, right side; player block on the left
+  const ax = 618, ay = 512, aw = 330, ah = 420;
+  if (han) {
+    ctx.save();
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(ax, ay, aw, ah, 26); else ctx.rect(ax, ay, aw, ah);
+    ctx.clip();
+    const scale = Math.max(aw / han.width, ah / han.height);
+    const dw = han.width * scale, dh = han.height * scale;
+    ctx.drawImage(han, ax + (aw - dw) / 2, ay, dw, dh);
+    ctx.restore();
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(ax, ay, aw, ah, 26); else ctx.rect(ax, ay, aw, ah);
+    ctx.lineWidth = 5; ctx.strokeStyle = '#d9a441'; ctx.stroke();
+    // name plate under her photo
+    ctx.fillStyle = '#d9a441';
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(ax, ay + ah - 58, aw, 58, [0, 0, 26, 26]); else ctx.rect(ax, ay + ah - 58, aw, 58);
+    ctx.fill();
+    ctx.fillStyle = '#231a04'; ctx.font = '800 32px Almarai, sans-serif';
+    ctx.fillText('القائدة حنين', ax + aw / 2, ay + ah - 18);
+  }
+  // player block (left of Haneen)
+  const cx = 316;
+  ctx.fillStyle = 'rgba(255,255,255,.82)'; ctx.font = '700 34px Almarai, sans-serif';
+  ctx.fillText(ME.type === 'volunteer' ? 'متطوع الهلال الأحمر' : 'زائر', cx, 566);
+  ctx.fillStyle = '#ffffff'; ctx.font = '800 66px Almarai, sans-serif';
+  const nm = ME.name || '';
+  ctx.fillText(nm.length > 18 ? nm.slice(0, 18) + '…' : nm, cx, 648);
+  // rank pill
+  const rankTxt = 'الرتبة: ' + rankFor(totalPoints());
+  ctx.font = '800 36px Almarai, sans-serif';
+  const rw = ctx.measureText(rankTxt).width + 64;
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(cx - rw / 2, 692, rw, 66, 33); else ctx.rect(cx - rw / 2, 692, rw, 66);
+  ctx.strokeStyle = '#f6d488'; ctx.lineWidth = 2.5; ctx.stroke();
+  ctx.fillStyle = '#f6d488'; ctx.fillText(rankTxt, cx, 738);
+  // points
+  ctx.fillStyle = '#ffffff'; ctx.font = '800 128px Almarai, sans-serif';
+  ctx.fillText(AR(totalPoints()), cx, 906);
+  ctx.fillStyle = '#f6d488'; ctx.font = '700 36px Almarai, sans-serif';
+  ctx.fillText('نقطة', cx, 962);
+  // stars line — single elegant row
+  const st = totalStars(), max = allEpisodes().length * 3;
+  ctx.fillStyle = '#ffffff'; ctx.font = '700 38px Almarai, sans-serif';
+  ctx.fillText('حاصل على ' + AR(st) + ' نجمة من ' + AR(max), W / 2, 1052);
+  ctx.fillStyle = '#d9a441'; ctx.font = '44px Almarai, sans-serif';
+  ctx.fillText('★', W / 2, 1112);
+  // footer
+  ctx.strokeStyle = 'rgba(246,212,136,.5)'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(W / 2 - 300, 1168); ctx.lineTo(W / 2 + 300, 1168); ctx.stroke();
+  ctx.fillStyle = '#ffffff'; ctx.font = '700 37px Almarai, sans-serif';
+  ctx.fillText('الهلال الأحمر المصري — فرع جنوب سيناء', W / 2, 1232);
+  ctx.fillStyle = 'rgba(255,255,255,.72)'; ctx.font = '400 31px Almarai, sans-serif';
+  ctx.fillText(new Date().toLocaleDateString('ar-EG'), W / 2, 1286);
 }
 
 /* =============== boot =============== */
