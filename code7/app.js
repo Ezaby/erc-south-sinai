@@ -398,7 +398,8 @@ function startEpisode(season, ep) {
         const tryAdv = () => { if (ended && minDone) adv(); };
         aud.onended = () => { ended = true; tryAdv(); };
         setTimeout(() => { minDone = true; tryAdv(); }, Math.min(wait, 2600));
-        setTimeout(adv, wait + 5000); // fallback if the audio stalls
+        let fbTimer = setTimeout(adv, wait + 9000); // safety net only — the voice decides when we move on
+        aud.onloadedmetadata = () => { clearTimeout(fbTimer); fbTimer = setTimeout(adv, (aud.duration || 0) * 1000 + 2500); };
       } else {
         setTimeout(playNext, wait);
       }
@@ -436,6 +437,7 @@ function updateVitals() {
 }
 
 function renderDecision() {
+  stopLineAudio();
   const ep = EP.ep, d = ep.decisions[EP.idx];
   EP.hintUsed = false;
   renderMeters();
@@ -535,7 +537,7 @@ function chooseOption(chosen, btn, optsWrap) {
   }
   const fb = el('epFeedback');
   const line = timedOut ? pick([lineById('H-040'), lineById('H-041')]) : (correct ? d.okLine : d.badLine);
-  setBubble(fb, line, correct ? 'haneen-proud.webp' : 'haneen-serious.webp');
+  const fbAud = setBubble(fb, line, correct ? 'haneen-proud.webp' : 'haneen-serious.webp');
   const info = document.createElement('p');
   info.style.cssText = 'font-weight:800; margin:10px 2px 0';
   info.textContent = correct ? `قرار صح ✅ +${AR(gained)} نقطة` : (timedOut ? 'الوقت خلص ⏱ القرار ده راح عليك' : 'قرار غلط ✗ العدادات اتأثرت');
@@ -555,6 +557,12 @@ function chooseOption(chosen, btn, optsWrap) {
     EP.idx++; renderDecision();
   };
   fb.appendChild(next);
+  if (fbAud) {
+    next.disabled = true;
+    const unlock = () => { next.disabled = false; };
+    fbAud.onended = unlock;
+    setTimeout(unlock, (isFinite(fbAud.duration) && fbAud.duration ? fbAud.duration * 1000 : 9000) + 2500);
+  }
 }
 async function finishEpisode(failed) {
   const rvF = el('bgRain'); if (rvF) { rvF.pause(); rvF.hidden = true; }
